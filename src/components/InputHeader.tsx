@@ -30,7 +30,7 @@ const InputHeader = (props: any) => {
       <TouchableOpacity style={styles.searchIcon}>
         <Ionicons
           name="search"
-          color={COLORS.Orange}
+          color={COLORS.NetflixRed}
           size={FONTSIZE.size_24}
           onPress={() => props.searchFuntion(searchText)}
         />

@@ -122,7 +122,7 @@ const HomeScreen = ({navigation}: any) => {
         </View>
 
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size={'large'} color={COLORS.Orange} />
+          <ActivityIndicator size={'large'} color={COLORS.NetflixRed} />
         </View>
       </ScrollView>
     );
