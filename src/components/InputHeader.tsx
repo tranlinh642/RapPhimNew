@@ -1,11 +1,9 @@
-import * as React from 'react';
-import {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   View,
   StyleSheet,
   TextInput,
-  Touchable,
   TouchableOpacity,
 } from 'react-native';
 import {
@@ -15,27 +13,44 @@ import {
   FONTSIZE,
   SPACING,
 } from '../theme/theme';
+import CustomIcon from './CustomIcon';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const InputHeader = (props: any) => {
-  const [searchText, setSearchText] = useState<string>('');
+  const [searchText, setSearchText] = useState<string>(props.initialText || '');
+
+  useEffect(() => {
+    if (props.initialText) {
+      setSearchText(props.initialText);
+    }
+  }, [props.initialText]);
+
+  const handleSearch = () => {
+    if (typeof props.searchFunction === 'function') {
+      props.searchFunction(searchText);
+    } else {
+      console.error('searchFunction is not a function:', props.searchFunction);
+    }
+  };
+
   return (
     <View style={styles.inputBox}>
       <TextInput
         style={styles.textInput}
         onChangeText={textInput => setSearchText(textInput)}
+        value={searchText}
         placeholder="Search your Movies..."
         placeholderTextColor={COLORS.WhiteRGBA32}
       />
-      <TouchableOpacity style={styles.searchIcon}>
+      <TouchableOpacity
+        style={styles.searchIcon}
+        onPress={handleSearch}>
         <Ionicons
-          name="search"
+          name="search-outline"
           color={COLORS.NetflixRed}
           size={FONTSIZE.size_24}
-          onPress={() => props.searchFuntion(searchText)}
         />
       </TouchableOpacity>
-    <Text style={{color: COLORS.White}}>{searchText}</Text>
     </View>
   );
 };

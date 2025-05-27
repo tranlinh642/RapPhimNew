@@ -71,7 +71,6 @@ const MovieCard = (props:any) => {
                 })
             }
         </View>
-
       </View>
     </TouchableOpacity>
   );

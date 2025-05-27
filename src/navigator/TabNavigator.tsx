@@ -1,14 +1,14 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { View, Text, StyleSheet } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import TicketScreen from '../screens/TicketScreen';
 import UserAccountScreen from '../screens/UserAccountScreen';
 
-import {COLORS, FONTSIZE, SPACING} from '../theme/theme';
+import { COLORS, FONTSIZE, SPACING } from '../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
@@ -20,8 +20,8 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarHideOnKeyboard: true,
-        headerShown: false,
+        tabBarHideOnKeyboard: true, // Ẩn tab bar khi bàn phím hiện lên
+        headerShown: false, // Ẩn header mặc định
         tabBarStyle: {
           backgroundColor: COLORS.Black,
           borderTopWidth: 0,
@@ -35,7 +35,7 @@ const TabNavigator = () => {
         component={HomeScreen}
         options={{
           tabBarShowLabel: false,
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <View style={styles.iconContainer}>
               {focused ? (
                 <View style={styles.focusedTab}>
@@ -62,7 +62,7 @@ const TabNavigator = () => {
         component={SearchScreen}
         options={{
           tabBarShowLabel: false,
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <View style={styles.iconContainer}>
               {focused ? (
                 <View style={styles.focusedTab}>
@@ -89,7 +89,7 @@ const TabNavigator = () => {
         component={TicketScreen}
         options={{
           tabBarShowLabel: false,
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <View style={styles.iconContainer}>
               {focused ? (
                 <View style={styles.focusedTab}>
@@ -116,7 +116,7 @@ const TabNavigator = () => {
         component={UserAccountScreen}
         options={{
           tabBarShowLabel: false,
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <View style={styles.iconContainer}>
               {focused ? (
                 <View style={styles.focusedTab}>
