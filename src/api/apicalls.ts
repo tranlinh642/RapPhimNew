@@ -44,3 +44,9 @@ export const movieCastDetails = (id: number, language?: string): string => {
   if (language) url += `&language=${language}`;
   return url;
 };
+
+export const movieVideos = (id: number, language?: string): string => {
+  let url = `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${apikey}`;
+  if (language) url += `&language=${language}`; // Bạn có thể thêm ngôn ngữ nếu muốn trailer theo ngôn ngữ cụ thể
+  return url;
+};

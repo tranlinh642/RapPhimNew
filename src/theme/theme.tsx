@@ -4,6 +4,7 @@ interface Spacing {
   space_8: number;
   space_10: number;
   space_12: number;
+  space_14: number;
   space_15: number;
   space_16: number;
   space_18: number;
@@ -20,6 +21,7 @@ export const SPACING: Spacing = {
   space_8: 8,
   space_10: 10,
   space_12: 12,
+  space_14: 14,
   space_15: 15,
   space_16: 16,
   space_18: 18,
@@ -33,6 +35,7 @@ export const SPACING: Spacing = {
 interface Color {
   Black: string;
   BlackRGB10: string;
+  BlackRGBA50: string;
   Orange: string;
   OrangeRGB10: string;
   Grey: string;
@@ -52,6 +55,7 @@ interface Color {
 export const COLORS: Color = {
   Black: '#000000',
   BlackRGB10: 'rgba(0,0,0,0.1)',
+  BlackRGBA50: 'rgba(0,0,0,0.5)',
   Orange: '#FF5524',
   OrangeRGB10: 'rgba(255,85,36,0.1)', // Sửa từ 0 thành 0.1
   Grey: '#333333',
