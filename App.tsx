@@ -4,6 +4,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import TabNavigator from './src/navigator/TabNavigator';
 import MovieDetailsScreen from './src/screens/MovieDetailsScreen';
 import SeatBookingScreen from './src/screens/SeatBookingScreen';
+import TicketScreen from './src/screens/TicketScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
@@ -27,6 +28,11 @@ const App = () => {
             name="SeatBooking"
             component={SeatBookingScreen}
             options={{animation: 'slide_from_bottom'}}
+          />
+          <Stack.Screen
+            name="Ticket"
+            component={TicketScreen}
+            options={{animation: 'slide_from_bottom'}} // Hoặc animation bạn muốn
           />
         </Stack.Navigator>
       </NavigationContainer>
