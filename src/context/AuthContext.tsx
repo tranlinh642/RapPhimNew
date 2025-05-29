@@ -19,6 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>; // Trả về true nếu thành công
   register: (name: string, email: string, password: string) => Promise<boolean>; // Trả về true nếu thành công
   logout: () => Promise<void>;
+  updateCurrentUsername: (newName: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +33,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Bắt đầu với trạng thái loading
 
+   const updateCurrentUsername = (newName: string) => {
+    setUser(currentUser => {
+      if (currentUser) {
+        // Cập nhật cả cache trong SQLite nếu cần đồng bộ hoàn toàn
+        // Tuy nhiên, database.ts/updateLocalUserName đã làm việc này.
+        // Ở đây chỉ cần cập nhật state của context.
+        const updatedUser = { ...currentUser, name: newName };
+        // Cũng nên cập nhật lại cache trong Users table một cách chủ động nếu logic saveLoggedInUserCache không được gọi
+        // (async () => {
+        //   await saveLoggedInUserCache(updatedUser); 
+        // })();
+        return updatedUser;
+      }
+      return null;
+    });
+  };
   // Kiểm tra session khi AuthProvider được mount lần đầu
   useEffect(() => {
     const checkAuthState = async () => {
@@ -124,7 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, isLoading, login, register, logout }}>
+     <AuthContext.Provider value={{ user, isLoggedIn, isLoading, login, register, logout, updateCurrentUsername /* THÊM VÀO ĐÂY */ }}>
       {children}
     </AuthContext.Provider>
   );

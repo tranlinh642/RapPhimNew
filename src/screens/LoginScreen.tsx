@@ -12,45 +12,35 @@ import {
 } from 'react-native';
 import { COLORS, FONTFAMILY, FONTSIZE, SPACING, BORDERRADIUS } from '../theme/theme';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App'; // Giả sử App.tsx ở thư mục gốc và export RootStackParamList
-import { useAuth } from '../context/AuthContext'; // Import useAuth để gọi hàm login
+import { RootStackParamList } from '../../App';
+import { useAuth } from '../context/AuthContext';
+import Fontisto from 'react-native-vector-icons/Fontisto'; // THÊM IMPORT FONTISTO
 
-// Định nghĩa kiểu props cho LoginScreen sử dụng NativeStackScreenProps
 type LoginScreenNavigationProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-// LoginScreenProps giờ đây nhận navigation và route từ kiểu trên
 interface LoginScreenProps extends LoginScreenNavigationProps {}
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const [isLoading, setIsLoading] = useState(false); // Sẽ dùng isLoading từ useAuth
 
-  const { login, isLoading: authIsLoading } = useAuth(); // Lấy hàm login và trạng thái loading từ AuthContext
+  const { login, isLoading: authIsLoading } = useAuth();
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập email và mật khẩu.');
       return;
     }
-    // Không cần setIsLoading(true) ở đây nữa vì useAuth().login() sẽ quản lý
     try {
-      const success = await login(email.trim(), password); // Gọi hàm login từ context
+      const success = await login(email.trim(), password);
       if (success) {
-        // Đăng nhập thành công, AuthContext sẽ cập nhật trạng thái isLoggedIn,
-        // và AppNavigator sẽ tự động chuyển màn hình.
-        // Không cần điều hướng thủ công hay gọi onLoginSuccess ở đây.
         console.log('Đăng nhập thành công thông qua AuthContext!');
-        // Alert.alert('Thông báo', 'Đăng nhập thành công!'); // Có thể bỏ Alert này nếu chuyển màn hình ngay
       } else {
-        // Hàm login trong AuthContext đã return false (ví dụ: thông tin không đúng nhưng không phải lỗi kỹ thuật)
         Alert.alert('Đăng nhập thất bại', 'Email hoặc mật khẩu không đúng.');
       }
     } catch (error: any) {
-      // Hàm login trong AuthContext đã throw error (ví dụ: lỗi mạng, lỗi server)
       Alert.alert('Đăng nhập thất bại', error.message || 'Đã có lỗi không mong muốn xảy ra.');
     }
-    // Không cần setIsLoading(false) ở đây nữa
   };
 
   const handleForgotPassword = () => {
@@ -61,12 +51,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
+        {/* PHẦN LOGO CVL - BẮT ĐẦU */}
+        <View style={styles.logoContainer}>
+          <Fontisto name="film" style={styles.logoIcon} />
+          <Text style={styles.logoText}>CVL Cinema</Text>
+        </View>
+        {/* PHẦN LOGO CVL - KẾT THÚC */}
+
         <Text style={styles.welcomeTitle}>Welcome Back</Text>
         <Text style={styles.subtitle}>Please sign in to continue</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Email hoặc Tên đăng nhập"
+          placeholder="Email" // Đổi lại placeholder cho rõ ràng hơn
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -86,7 +83,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
           <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
 
-        {authIsLoading ? ( // Sử dụng authIsLoading từ useAuth()
+        {authIsLoading ? (
           <ActivityIndicator size="large" color={COLORS.NetflixRed} style={styles.loader} />
         ) : (
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -96,7 +93,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
 
         <TouchableOpacity
           style={styles.registerLinkContainer}
-          onPress={() => navigation.navigate('Register')} // Điều hướng đến màn hình Register
+          onPress={() => navigation.navigate('Register')}
         >
           <Text style={styles.registerText}>Chưa có tài khoản? </Text>
           <Text style={[styles.registerText, styles.registerLink]}>Đăng ký</Text>
@@ -117,6 +114,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.space_24,
     paddingBottom: SPACING.space_20,
   },
+  // STYLE CHO LOGO CVL - BẮT ĐẦU
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.space_28,
+  },
+  logoIcon: {
+    fontSize: 90, // Kích thước tương đương "Welcome Back"
+    color: COLORS.NetflixRed,   // Màu đỏ
+    marginRight: SPACING.space_10, // Khoảng cách giữa icon và chữ CVL
+  },
+  logoText: {
+    fontSize: 40, // Kích thước tương đương "Welcome Back"
+    color: COLORS.NetflixRed,   // Màu đỏ
+    fontFamily: FONTFAMILY.poppins_bold, // Cùng font weight với "Welcome Back"
+    marginTop: SPACING.space_32,
+  },
+  // STYLE CHO LOGO CVL - KẾT THÚC
   welcomeTitle: {
     fontSize: FONTSIZE.size_30,
     color: COLORS.White,
@@ -177,10 +193,10 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.poppins_semibold,
   },
   loader: {
-    height: 58, // Giữ chiều cao tương đương nút LoginButton
+    height: 58,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.space_36, // Giữ margin tương đương LoginButton
+    marginBottom: SPACING.space_36,
   }
 });
 

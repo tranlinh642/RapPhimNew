@@ -12,6 +12,7 @@ import SeatBookingScreen from './src/screens/SeatBookingScreen';
 import TicketDetailScreen from './src/screens/TicketDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import { COLORS } from './src/theme/theme';
 
 export type RootStackParamList = {
@@ -21,6 +22,7 @@ export type RootStackParamList = {
   MovieDetails: { movieid: number; isNowPlaying?: boolean };
   SeatBooking: { bgImage: string; PosterImage: string; movieId?: number; movieTitle?: string };
   TicketDetail: { movieTitle: string; seatArray: number[]; showTime: string; showDate: any; posterImage: string };
+  ChangePassword: undefined; 
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,6 +45,7 @@ const AppNavigator = () => {
           <Stack.Screen name="Tab" component={TabNavigator} options={{ animation: 'default' }} />
           <Stack.Screen name="MovieDetails" component={MovieDetailsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="SeatBooking" component={SeatBookingScreen} options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="TicketDetail" component={TicketDetailScreen} options={{ animation: 'slide_from_bottom' }} />
         </>
       ) : (
@@ -57,7 +60,7 @@ const AppNavigator = () => {
 
 const App = () => {
   useEffect(() => {
-    resetDatabase() // Reset cơ sở dữ liệu để đảm bảo trạng thái sạch
+    initDB()
       .then(() => debugDatabaseTables())
       .catch(error => console.error('[App] Lỗi khi reset hoặc kiểm tra cơ sở dữ liệu:', error));
   }, []);
