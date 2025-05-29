@@ -36,11 +36,10 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     }
     setIsLoading(true);
     try {
-      // Gọi hàm đăng ký cục bộ từ database.ts
       await registerLocalUser(name.trim(), email.trim().toLowerCase(), password);
 
       Alert.alert(
-        'Đăng ký thành công', // Bỏ chữ "giả lập"
+        'Đăng ký thành công',
         'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.',
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );

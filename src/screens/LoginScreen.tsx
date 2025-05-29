@@ -35,7 +35,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
       if (success) {
         console.log('Đăng nhập thành công thông qua AuthContext!');
       } else {
-        // Thông báo lỗi đã được xử lý bên trong useAuth,
       }
     } catch (error: any) {
       Alert.alert('Đăng nhập thất bại', error.message || 'Đã có lỗi không mong muốn xảy ra.');
@@ -50,17 +49,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
-        {/* Khối Logo */}
         <View style={styles.logoContainer}>
           <Fontisto name="film" style={styles.logoIcon} />
           <Text style={styles.logoText}>CVL Cinema</Text>
         </View>
 
-        {/* Khối Tiêu đề chào mừng */}
         <Text style={styles.welcomeTitle}>Welcome Back</Text>
         <Text style={styles.subtitle}>Please sign in to continue</Text>
 
-        {/* Form Đăng Nhập */}
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -83,7 +79,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
           <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
 
-        {/* Nút Đăng nhập hoặc Hiển thị loading */}
         {authIsLoading ? (
           <ActivityIndicator size="large" color={COLORS.NetflixRed} style={styles.loader} />
         ) : (
@@ -92,7 +87,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
           </TouchableOpacity>
         )}
 
-        {/* Liên kết Đăng ký */}
         <TouchableOpacity
           style={styles.registerLinkContainer}
           onPress={() => navigation.navigate('Register')}

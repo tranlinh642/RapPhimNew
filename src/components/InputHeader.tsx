@@ -13,7 +13,6 @@ import {
   FONTSIZE,
   SPACING,
 } from '../theme/theme';
-import CustomIcon from './CustomIcon';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const InputHeader = (props: any) => {

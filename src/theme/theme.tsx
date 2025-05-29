@@ -43,10 +43,10 @@ interface Color {
   Yellow: string;
   White: string;
   Blue: string;
-  NetflixRed: string; // Thêm màu đỏ Netflix
-  NetflixDark: string; // Thêm màu đen Netflix
-  NetflixRedRGB0: string;  // Màu NetflixRed với Alpha = 0 (trong suốt hoàn toàn)
-  NetflixRedRGB10: string; // Thêm Netflix red với opacity
+  NetflixRed: string; 
+  NetflixDark: string; 
+  NetflixRedRGB0: string;  
+  NetflixRedRGB10: string;
   WhiteRGBA75: string;
   WhiteRGBA50: string;
   WhiteRGBA32: string;
@@ -58,16 +58,16 @@ export const COLORS: Color = {
   BlackRGB10: 'rgba(0,0,0,0.1)',
   BlackRGBA50: 'rgba(0,0,0,0.5)',
   Orange: '#FF5524',
-  OrangeRGB10: 'rgba(255,85,36,0.1)', // Sửa từ 0 thành 0.1
+  OrangeRGB10: 'rgba(255,85,36,0.1)', 
   Grey: '#333333',
   DarkGrey: '#0b0b0b',
   Yellow: '#E1CD17',
   White: '#FFFFFF',
   Blue: '#5fb2ce',
-  NetflixRed: '#E50914', // Màu đỏ Netflix chính thức
-  NetflixDark: '#141414', // Màu đen Netflix
-  NetflixRedRGB0: 'rgba(229, 9, 20, 0)',    // NetflixRed với độ trong suốt 0%
-  NetflixRedRGB10: 'rgba(229,9,20,0.1)', // Netflix red với opacity 10%
+  NetflixRed: '#E50914',
+  NetflixDark: '#141414', 
+  NetflixRedRGB0: 'rgba(229, 9, 20, 0)',   
+  NetflixRedRGB10: 'rgba(229,9,20,0.1)',
   WhiteRGBA75: 'rgba(255,255,255,0.75)',
   WhiteRGBA50: 'rgba(255,255,255,0.50)',
   WhiteRGBA32: 'rgba(255,255,255,0.32)',

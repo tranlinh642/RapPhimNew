@@ -1,7 +1,7 @@
 const apikey: string = '56eca54aed68308aedd28e915885391d'; // Nên dùng biến môi trường
 
 export const baseImagePath = (size: string, path: string): string => {
-  if (!path) return ''; // Tránh lỗi nếu path rỗng
+  if (!path) return ''; 
   return `https://image.tmdb.org/t/p/${size}${path}`;
 };
 
@@ -47,6 +47,6 @@ export const movieCastDetails = (id: number, language?: string): string => {
 
 export const movieVideos = (id: number, language?: string): string => {
   let url = `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${apikey}`;
-  if (language) url += `&language=${language}`; // Bạn có thể thêm ngôn ngữ nếu muốn trailer theo ngôn ngữ cụ thể
+  if (language) url += `&language=${language}`; 
   return url;
 };

@@ -20,8 +20,8 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarHideOnKeyboard: true, // Ẩn tab bar khi bàn phím hiện lên
-        headerShown: false, // Ẩn header mặc định
+        tabBarHideOnKeyboard: true, 
+        headerShown: false, 
         tabBarStyle: {
           backgroundColor: COLORS.Black,
           borderTopWidth: 0,

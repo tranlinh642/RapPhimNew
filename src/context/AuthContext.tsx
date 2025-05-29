@@ -10,14 +10,14 @@ import {
   UserProfile,
   storeLocalSession,
   getLoggedInUserCache,
-} from '../hooks/database'; // Đường dẫn tới file database.ts của bạn
+} from '../hooks/database'; 
 
 interface AuthContextType {
   user: UserProfile | null;
   isLoggedIn: boolean;
-  isLoading: boolean; // Trạng thái đang kiểm tra session ban đầu
-  login: (email: string, password: string) => Promise<boolean>; // Trả về true nếu thành công
-  register: (name: string, email: string, password: string) => Promise<boolean>; // Trả về true nếu thành công
+  isLoading: boolean; 
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string) => Promise<boolean>; 
   logout: () => Promise<void>;
   updateCurrentUsername: (newName: string) => void;
 }
@@ -31,37 +31,29 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Bắt đầu với trạng thái loading
+  const [isLoading, setIsLoading] = useState<boolean>(true); 
 
    const updateCurrentUsername = (newName: string) => {
     setUser(currentUser => {
       if (currentUser) {
-        // Cập nhật cả cache trong SQLite nếu cần đồng bộ hoàn toàn
-        // Tuy nhiên, database.ts/updateLocalUserName đã làm việc này.
-        // Ở đây chỉ cần cập nhật state của context.
         const updatedUser = { ...currentUser, name: newName };
-        // Cũng nên cập nhật lại cache trong Users table một cách chủ động nếu logic saveLoggedInUserCache không được gọi
-        // (async () => {
-        //   await saveLoggedInUserCache(updatedUser); 
-        // })();
         return updatedUser;
       }
       return null;
     });
   };
-  // Kiểm tra session khi AuthProvider được mount lần đầu
+
   useEffect(() => {
     const checkAuthState = async () => {
       try {
-        await initDB(); // Đảm bảo DB đã được khởi tạo
+        await initDB(); 
         const userEmailFromSession = await retrieveLocalSession();
         if (userEmailFromSession) {
-          const cachedUser = await getLoggedInUserCache(); // Lấy thông tin user từ cache
+          const cachedUser = await getLoggedInUserCache(); 
           if (cachedUser && cachedUser.email === userEmailFromSession) {
             setUser(cachedUser);
             setIsLoggedIn(true);
           } else {
-            // Session có nhưng không có cache user hợp lệ, xóa session
             await clearLocalSession();
             setUser(null);
             setIsLoggedIn(false);
@@ -103,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setIsLoggedIn(false);
       setIsLoading(false);
-      throw error; // Ném lỗi ra để màn hình Login có thể bắt và hiển thị
+      throw error; 
     }
   };
 
@@ -111,26 +103,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       await registerLocalUser(name, email, password);
-      // Sau khi đăng ký, người dùng cần đăng nhập lại, hoặc bạn có thể tự động đăng nhập họ
-      // Nếu tự động đăng nhập, bạn sẽ gọi login() ở đây hoặc lấy userProfile và set state
       setIsLoading(false);
-      return true; // Đăng ký thành công (nhưng chưa đăng nhập)
+      return true; 
     } catch (error) {
       console.error('[AuthContext] Lỗi đăng ký:', error);
       setIsLoading(false);
-      throw error; // Ném lỗi ra để màn hình Register có thể bắt và hiển thị
+      throw error;
     }
   };
 
   const logout = async () => {
     setIsLoading(true);
     try {
-      // Lấy email của user hiện tại để có thể xóa vé của họ nếu cần
-      // const currentUserEmail = user?.email;
-      await clearLocalSession(); // Hàm này đã bao gồm clearLoggedInUserCache()
-      // if (currentUserEmail) {
-      //   await clearUserTicketsCacheForUser(currentUserEmail);
-      // }
+      await clearLocalSession();
       setUser(null);
       setIsLoggedIn(false);
     } catch (error) {
@@ -141,13 +126,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-     <AuthContext.Provider value={{ user, isLoggedIn, isLoading, login, register, logout, updateCurrentUsername /* THÊM VÀO ĐÂY */ }}>
+     <AuthContext.Provider value={{ user, isLoggedIn, isLoading, login, register, logout, updateCurrentUsername}}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook để dễ dàng sử dụng AuthContext
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

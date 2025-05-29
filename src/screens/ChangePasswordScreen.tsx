@@ -21,20 +21,17 @@ import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import { updateLocalUserPassword } from '../hooks/database';
 
-//  Định nghĩa Props cho Component
 interface ChangePasswordScreenProps {
   navigation: any;
 }
 
 const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation }) => {
-  // Khai báo State
   const { user } = useAuth();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Xử lý logic thay đổi mật khẩu
   const handlePasswordChange = async () => {
     if (!user || !user.email) {
       Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
@@ -72,7 +69,6 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation 
     }
   };
 
-  // Phần: Giao diện người dùng (UI)
   return (
     <View style={styles.screenContainer}>
       <StatusBar hidden={false} barStyle="light-content" backgroundColor={COLORS.Black} />

@@ -5,12 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
-  ImageBackground,
-  TouchableOpacity, // Bạn không dùng TouchableOpacity ở đây, có thể bỏ
-  FlatList,       // Bạn không dùng FlatList ở đây, có thể bỏ
-  ToastAndroid,   // Bạn không dùng ToastAndroid ở đây, có thể bỏ
+  ImageBackground,    
   Image,
-  ActivityIndicator, // Thêm để hiển thị loading
+  ActivityIndicator, 
 } from 'react-native';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import AppHeader from '../components/AppHeader';
@@ -25,38 +22,33 @@ import LinearGradient from 'react-native-linear-gradient';
 import CustomIcon from '../components/CustomIcon';
 
 const TicketDetailScreen = ({navigation, route}: any) => {
-  // Ưu tiên lấy dữ liệu từ route.params nếu có, nếu không thì là undefined để useEffect xử lý
   const [ticketData, setTicketData] = useState<any>(route.params?.seatArray ? route.params : undefined);
 
   useEffect(() => {
-    // Nếu ticketData chưa được set từ route.params (ví dụ: người dùng vào từ tab My Tickets)
-    // thì mới cố gắng đọc từ EncryptedStorage
-    if (!ticketData?.seatArray) { // Kiểm tra một thuộc tính cụ thể của vé mới, ví dụ seatArray
+    if (!ticketData?.seatArray) {
       (async () => {
         try {
           const ticketString = await EncryptedStorage.getItem('ticket');
           if (ticketString !== undefined && ticketString !== null) {
             setTicketData(JSON.parse(ticketString));
           } else {
-            // Nếu không có vé trong storage và cũng không có từ params -> không có vé
             setTicketData(null);
           }
         } catch (error) {
           console.error('Something went wrong while getting Data from Storage', error);
-          setTicketData(null); // Lỗi khi đọc, coi như không có vé
+          setTicketData(null); 
         }
       })();
     }
-  }, []); // Chỉ chạy một lần khi component mount, hoặc khi route.params thay đổi nếu bạn muốn (thêm route.params vào dependency array)
+  }, []); 
 
-  // Trạng thái loading: khi ticketData là undefined (chưa có dữ liệu từ params và chưa đọc xong từ storage)
   if (ticketData === undefined) {
     return (
       <View style={styles.container}>
         <StatusBar hidden />
         <View style={styles.appHeaderContainer}>
           <AppHeader
-            name="close-outline" // Hoặc icon phù hợp
+            name="close-outline" 
             header={'Vé của tôi'}
             action={() => navigation.goBack()}
           />
@@ -68,7 +60,6 @@ const TicketDetailScreen = ({navigation, route}: any) => {
     );
   }
 
-  // Trạng thái không có vé (sau khi đã kiểm tra params và storage)
   if (ticketData === null) {
     return (
       <View style={styles.container}>
@@ -87,7 +78,6 @@ const TicketDetailScreen = ({navigation, route}: any) => {
     );
   }
 
-  // Nếu có ticketData, hiển thị vé
   return (
     <View style={styles.container}>
       <StatusBar hidden />
@@ -96,14 +86,13 @@ const TicketDetailScreen = ({navigation, route}: any) => {
           name="close-outline"
           header={'Vé của tôi'}
           action={() => navigation.goBack()}
-           customIconStyle={{ // Thêm style cho icon AppHeader nếu cần
+           customIconStyle={{ 
              backgroundColor: 'rgba(0,0,0,0.3)',
              borderRadius: BORDERRADIUS.radius_20,
            }}
         />
       </View>
 
-      {/* ScrollView sẽ bao quanh toàn bộ nội dung vé để có thể cuộn nếu vé quá dài */}
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.ticketContainer}>
           <ImageBackground
@@ -160,7 +149,7 @@ const TicketDetailScreen = ({navigation, route}: any) => {
                 <Text style={styles.subheading}>Ghế</Text>
                 <Text style={styles.subtitle}>
                   {ticketData?.seatArray
-                    ?.slice(0, 3) // Hiển thị tối đa 3 ghế, bạn có thể bỏ slice nếu muốn hiển thị hết
+                    ?.slice(0, 3) 
                     .map((item: any, index: number, arr: any) => {
                       return item + (index === arr.length - 1 ? '' : ', ');
                     })}
@@ -169,14 +158,12 @@ const TicketDetailScreen = ({navigation, route}: any) => {
               </View>
             </View>
             <Image
-              source={require('../assets/image/barcode.png')} // Đảm bảo đường dẫn này đúng
+              source={require('../assets/image/barcode.png')} 
               style={styles.barcodeImage}
             />
           </View>
         </View>
       </ScrollView>
-      {/* Phần nút "Total Price" và "Buy Tickets" không có ở màn hình này, nên tôi đã bỏ đi */}
-      {/* Nếu bạn muốn giữ lại, hãy đặt nó bên ngoài ScrollView hoặc cố định ở cuối màn hình */}
     </View>
   );
 };
@@ -188,10 +175,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.Black,
   },
   appHeaderContainer: {
-    paddingHorizontal: 40, // Giảm padding cho AppHeader
-    paddingTop: 40,      // Giảm padding cho AppHeader
+    paddingHorizontal: 40, 
   },
-  loadingView: { // Dùng cho cả ActivityIndicator và Text lỗi
+  loadingView: { 
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -201,21 +187,19 @@ const styles = StyleSheet.create({
     fontSize: FONTSIZE.size_14,
     color: COLORS.WhiteRGBA75,
   },
-  scrollViewContent: { // Style cho contentContainer của ScrollView
-    flexGrow: 1, // Quan trọng để ScrollView có thể cuộn khi nội dung dài
-    justifyContent: 'center', // Căn giữa nội dung vé nếu nó không đủ dài để cuộn
-    alignItems: 'center', // Căn giữa ticketContainer theo chiều ngang
-    paddingVertical: SPACING.space_20, // Thêm padding trên dưới cho ScrollView
+  scrollViewContent: { 
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center', 
+    paddingVertical: SPACING.space_20, 
   },
   ticketContainer: {
-    // flex: 1, // Bỏ flex: 1 ở đây
-    // justifyContent: 'center', // Bỏ justifyContent ở đây
-    alignItems: 'center', // Để các thành phần con (ticketBGImage, linear, ticketFooter) tự căn giữa
-    width: 300, // Giữ chiều rộng cố định cho vé
+    alignItems: 'center',
+    width: 300, 
   },
   ticketBGImage: {
-    alignSelf: 'center', // Đảm bảo nó căn giữa trong ticketContainer (dù ticketContainer đã có alignItems: 'center')
-    width: '100%', // Chiếm full width của ticketContainer (300px)
+    alignSelf: 'center',
+    width: '100%', 
     aspectRatio: 200 / 300,
     borderTopLeftRadius: BORDERRADIUS.radius_25,
     borderTopRightRadius: BORDERRADIUS.radius_25,
@@ -223,43 +207,41 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   linearGradient: {
-    height: '70%', // Độ cao của gradient màu cam
-    // Thêm màu trong suốt cho Orange nếu bạn có trong theme
-    // Ví dụ: colors: [COLORS.OrangeTransparent || 'rgba(255,165,0,0)', COLORS.Orange]
+    height: '70%', 
   },
   linear: {
     borderTopColor: COLORS.Black,
-    borderTopWidth: 2, // Giảm độ dày đường dash
-    width: '100%', // Chiếm full width của ticketContainer (300px)
+    borderTopWidth: 2, 
+    width: '100%', 
     alignSelf: 'center',
-    backgroundColor: COLORS.NetflixRed, // Nền của đường dash là Orange
+    backgroundColor: COLORS.NetflixRed,
     borderStyle: 'dashed',
   },
   ticketFooter: {
     backgroundColor: COLORS.NetflixRedRGB10,
-    width: '100%', // Chiếm full width của ticketContainer (300px)
+    width: '100%',
     alignItems: 'center',
-    paddingBottom: SPACING.space_20, // Giảm padding bottom
+    paddingBottom: SPACING.space_20, 
     alignSelf: 'center',
     borderBottomLeftRadius: BORDERRADIUS.radius_25,
     borderBottomRightRadius: BORDERRADIUS.radius_25,
-    paddingTop: SPACING.space_10, // Thêm padding top nhỏ
+    paddingTop: SPACING.space_10, 
   },
   ticketDateContainer: {
     flexDirection: 'row',
     gap: SPACING.space_36,
     alignItems: 'center',
-    justifyContent: 'space-around', // Phân bố đều hơn
+    justifyContent: 'space-around', 
     marginVertical: SPACING.space_10,
-    width: '90%', // Giới hạn chiều rộng để không bị sát lề quá
+    width: '90%', 
   },
   ticketSeatContainer: {
     flexDirection: 'row',
-    gap: SPACING.space_20, // Giảm gap
-    alignItems: 'flex-start', // Căn trên cho các mục
-    justifyContent: 'space-around', // Phân bố đều hơn
+    gap: SPACING.space_20, 
+    alignItems: 'flex-start', 
+    justifyContent: 'space-around',
     marginVertical: SPACING.space_10,
-    width: '90%', // Giới hạn chiều rộng
+    width: '90%', 
   },
   dateTitle: {
     fontFamily: FONTFAMILY.poppins_medium,
@@ -268,36 +250,36 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: FONTFAMILY.poppins_regular,
-    fontSize: FONTSIZE.size_12, // Giảm kích thước chữ phụ
+    fontSize: FONTSIZE.size_12,
     color: COLORS.White,
     marginTop: SPACING.space_4,
   },
   subheading: {
     fontFamily: FONTFAMILY.poppins_medium,
-    fontSize: FONTSIZE.size_14, // Giảm kích thước chữ
+    fontSize: FONTSIZE.size_14,
     color: COLORS.White,
   },
   subtitleContainer: {
     alignItems: 'center',
-    flex: 1, // Để các container này chia sẻ không gian đều nhau
-    paddingHorizontal: SPACING.space_4, // Thêm padding nhỏ
+    flex: 1,
+    paddingHorizontal: SPACING.space_4, 
   },
   clockIcon: {
-    fontSize: FONTSIZE.size_20, // Giảm kích thước icon
+    fontSize: FONTSIZE.size_20, 
     color: COLORS.White,
-    marginBottom: SPACING.space_4, // Giảm margin
+    marginBottom: SPACING.space_4,
   },
   barcodeImage: {
-    height: 40, // Giảm chiều cao barcode
+    height: 40, 
     aspectRatio: 158 / 52,
-    marginTop: SPACING.space_15, // Thêm margin top
+    marginTop: SPACING.space_15, 
   },
   blackCircle: {
     height: 80,
     width: 80,
-    borderRadius: 40, // Sửa lại thành 40
+    borderRadius: 40,
     backgroundColor: COLORS.Black,
-    zIndex: 1, // Đảm bảo nó nổi lên trên để cắt
+    zIndex: 1, 
   },
 });
 

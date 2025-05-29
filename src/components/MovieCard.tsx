@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     fontSize: FONTSIZE.size_24,
     color: COLORS.White,
     textAlign: 'center',
-    paddingVertical: SPACING.space_10,
+    paddingVertical: SPACING.space_16,
   },
   rateContainer: {
     flexDirection: 'row',
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   genreText: {
     fontFamily: FONTFAMILY.poppins_regular,
-    fontSize: FONTSIZE.size_10,
+    fontSize: 12,
     color: COLORS.WhiteRGBA75,
   },
 });

@@ -76,7 +76,6 @@ export const initDB = async (): Promise<SQLiteDatabase> => {
       });
     });
 
-    // Tạo bảng LocalCredentials
     await new Promise<void>((resolve, reject) => {
       db.transaction(tx => {
         tx.executeSql(
@@ -99,7 +98,6 @@ export const initDB = async (): Promise<SQLiteDatabase> => {
       });
     });
 
-    // Xác nhận bảng LocalCredentials
     await new Promise<void>((resolve, reject) => {
       db.transaction(tx => {
         tx.executeSql(
@@ -123,7 +121,6 @@ export const initDB = async (): Promise<SQLiteDatabase> => {
       });
     });
 
-    // Tạo bảng Users
     await new Promise<void>((resolve, reject) => {
       db.transaction(tx => {
         tx.executeSql(
@@ -146,7 +143,6 @@ export const initDB = async (): Promise<SQLiteDatabase> => {
       });
     });
 
-    // Tạo bảng UserTickets (bỏ khóa ngoại tạm thời để debug)
     await new Promise<void>((resolve, reject) => {
       db.transaction(tx => {
         tx.executeSql(
@@ -173,7 +169,6 @@ export const initDB = async (): Promise<SQLiteDatabase> => {
       });
     });
 
-    // Xác nhận bảng UserTickets
     await new Promise<void>((resolve, reject) => {
       db.transaction(tx => {
         tx.executeSql(
@@ -243,7 +238,6 @@ export const debugDatabaseTables = async (): Promise<string[]> => {
   }
 };
 
-// --- Quản lý Đăng ký/Đăng nhập Cục bộ ---
 const simpleHash = (password: string): string => {
   let hash = 0;
   for (let i = 0; i < password.length; i++) {
@@ -342,7 +336,6 @@ export const loginLocalUser = async (email: string, password: string): Promise<U
   }
 };
 
-// --- Quản lý Session ---
 export const storeLocalSession = async (email: string): Promise<void> => {
   try {
     await EncryptedStorage.setItem('local_user_session_email', email);
@@ -376,7 +369,6 @@ export const clearLocalSession = async (): Promise<void> => {
   }
 };
 
-// --- Quản lý Cache Hồ sơ Người dùng ---
 export const saveLoggedInUserCache = async (user: UserProfile): Promise<void> => {
   if (!user || !user.id_from_backend) {
     console.error('[DB Users] Dữ liệu người dùng không hợp lệ.');
@@ -450,7 +442,6 @@ export const clearLoggedInUserCache = async (): Promise<void> => {
   }
 };
 
-// --- Quản lý Cache Vé ---
 export const saveUserTicketsToCache = async (tickets: Ticket[]): Promise<void> => {
   if (!tickets || tickets.length === 0) {
     console.warn('[DB Tickets] Không có vé để lưu.');
@@ -558,7 +549,6 @@ export const clearUserTicketsCacheForUser = async (userEmail: string): Promise<v
   }
 };
 
-// --- Đóng Cơ sở dữ liệu ---
 export const closeDB = async (): Promise<void> => {
   if (dbInstance) {
     try {
@@ -574,7 +564,6 @@ export const closeDB = async (): Promise<void> => {
   }
 };
 
-// --- Reset Cơ sở dữ liệu ---
 export const resetDatabase = async (): Promise<void> => {
   const db = await getDBInstance();
   try {
@@ -595,14 +584,10 @@ export const resetDatabase = async (): Promise<void> => {
   }
 };
 
-//Đổi mật khẩu
-
 export const updateLocalUserPassword = async (email: string, oldPassword: string, newPassword: string): Promise<void> => {
-  // Kiểm tra đầu vào cơ bản
   if (!email || !oldPassword || !newPassword) {
     throw new Error('Email, mật khẩu cũ, và mật khẩu mới không được để trống.');
   }
-  // Bạn có thể thêm các quy tắc xác thực cho mật khẩu mới ở đây, ví dụ độ dài tối thiểu
   if (newPassword.length < 6) {
     throw new Error('Mật khẩu mới phải có ít nhất 6 ký tự.');
   }
@@ -612,23 +597,21 @@ export const updateLocalUserPassword = async (email: string, oldPassword: string
 
   const db = await getDBInstance();
 
-  // Bước 1: Lấy thông tin tài khoản hiện tại (chủ yếu là password_hash)
   const userCredential = await new Promise<{ password_hash: string } | null>((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
         'SELECT password_hash FROM LocalCredentials WHERE email = ?',
-        [email.toLowerCase()], // Luôn chuẩn hóa email về chữ thường khi truy vấn
+        [email.toLowerCase()], 
         (_, results) => {
           if (results.rows.length > 0) {
-            resolve(results.rows.item(0)); // Trả về thông tin nếu tìm thấy
-          } else {
-            resolve(null); // Người dùng không tồn tại
+            resolve(results.rows.item(0));
+            resolve(null); 
           }
         },
-        (_, error) => { // Xử lý lỗi SQL
+        (_, error) => { 
           console.error('[DB] Lỗi khi tìm người dùng để đổi mật khẩu:', error);
           reject(new Error('Lỗi cơ sở dữ liệu khi tìm kiếm người dùng.'));
-          return true; // Bắt buộc cho error callback của executeSql
+          return true; 
         }
       );
     });
@@ -636,18 +619,14 @@ export const updateLocalUserPassword = async (email: string, oldPassword: string
 
   if (!userCredential) {
     console.error(`[DB] Không tìm thấy người dùng với email: ${email} để đổi mật khẩu.`);
-    // Không nên thông báo "Không tìm thấy người dùng" trực tiếp cho người dùng cuối vì lý do bảo mật,
-    // nhưng trong ngữ cảnh local này có thể chấp nhận được hoặc bạn có thể trả về lỗi chung hơn.
     throw new Error('Tài khoản không tồn tại hoặc email không đúng.');
   }
 
-  // Bước 2: Xác thực mật khẩu cũ
-  const hashedOldPassword = simpleHash(oldPassword); // Sử dụng hàm băm đã có
+  const hashedOldPassword = simpleHash(oldPassword); 
   if (hashedOldPassword !== userCredential.password_hash) {
     throw new Error('Mật khẩu cũ không chính xác.');
   }
 
-  // Bước 3: Băm và cập nhật mật khẩu mới
   const hashedNewPassword = simpleHash(newPassword);
 
   await new Promise<void>((resolve, reject) => {
@@ -658,18 +637,16 @@ export const updateLocalUserPassword = async (email: string, oldPassword: string
         (_, results) => {
           if (results.rowsAffected > 0) {
             console.log(`[DB] Đã cập nhật mật khẩu thành công cho người dùng: ${email}`);
-            resolve(); // Thành công
+            resolve(); 
           } else {
-            // Trường hợp này ít khi xảy ra nếu đã tìm thấy user ở Bước 1,
-            // nhưng vẫn nên có để phòng trường hợp không mong muốn.
             console.error(`[DB] Không cập nhật được mật khẩu cho ${email}. Không có dòng nào bị ảnh hưởng.`);
             reject(new Error('Không thể cập nhật mật khẩu. Vui lòng thử lại.'));
           }
         },
-        (_, error) => { // Xử lý lỗi SQL
+        (_, error) => { 
           console.error(`[DB] Lỗi SQL khi cập nhật mật khẩu cho ${email}:`, error);
           reject(new Error('Lỗi cơ sở dữ liệu khi cập nhật mật khẩu.'));
-          return true; // Bắt buộc cho error callback của executeSql
+          return true; 
         }
       );
     });
@@ -677,14 +654,13 @@ export const updateLocalUserPassword = async (email: string, oldPassword: string
 };
 
 export const updateLocalUserName = async (email: string, newName: string): Promise<void> => {
-  if (!email || typeof newName === 'undefined') { // Cho phép newName là chuỗi rỗng nếu muốn
+  if (!email || typeof newName === 'undefined') { 
     console.error('[DB] Email hoặc tên mới không hợp lệ.');
     throw new Error('Email và tên mới không được để trống.');
   }
 
   const db = await getDBInstance();
 
-  // Cập nhật tên trong bảng LocalCredentials
   await new Promise<void>((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -695,7 +671,6 @@ export const updateLocalUserName = async (email: string, newName: string): Promi
             console.log(`[DB] Đã cập nhật tên trong LocalCredentials cho: ${email}`);
             resolve();
           } else {
-            // Trường hợp này có thể xảy ra nếu email không tồn tại, dù logic gọi hàm nên đảm bảo email đúng
             console.error(`[DB] Không tìm thấy người dùng LocalCredentials với email ${email} để cập nhật tên.`);
             reject(new Error('Không thể cập nhật tên người dùng. Tài khoản không tồn tại.'));
           }
@@ -709,8 +684,6 @@ export const updateLocalUserName = async (email: string, newName: string): Promi
     });
   });
 
-  // Cập nhật tên trong bảng Users (cache profile)
-  // Giả định rằng id_from_backend trong Users table chính là email cho local users
   try {
     const cachedUser = await new Promise<UserProfile | null>((resolve, reject) => {
       db.transaction(tx => {
@@ -728,17 +701,12 @@ export const updateLocalUserName = async (email: string, newName: string): Promi
     
     if (cachedUser) {
       const updatedCachedUser: UserProfile = { ...cachedUser, name: newName };
-      // saveLoggedInUserCache thường xóa hết rồi insert, nên nó sẽ cập nhật đúng
       await saveLoggedInUserCache(updatedCachedUser);
       console.log(`[DB] Đã cập nhật tên trong cache (Users table) cho: ${email}`);
     } else {
       console.log(`[DB] Không tìm thấy cache người dùng trong Users table cho ${email} để cập nhật tên. Có thể người dùng chưa từng được cache đầy đủ.`);
-      // Tùy chọn: Nếu muốn, bạn có thể tạo một bản ghi mới trong Users table ở đây
-      // nếu việc chỉ cập nhật LocalCredentials là chưa đủ cho logic của bạn.
-      // Ví dụ: await saveLoggedInUserCache({ id_from_backend: email, name: newName, email: email });
     }
   } catch (error) {
     console.error(`[DB] Lỗi khi cập nhật tên trong cache (Users table) cho ${email}:`, error);
-    // Không throw error ở đây để tránh lỗi kép nếu LocalCredentials đã cập nhật thành công
   }
 };

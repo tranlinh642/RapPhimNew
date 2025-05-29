@@ -8,7 +8,6 @@ import {
   FONTSIZE,
   SPACING,
 } from '../theme/theme';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 const CastCard = (props: any) => {
   return (

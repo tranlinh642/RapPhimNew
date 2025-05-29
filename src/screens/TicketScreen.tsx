@@ -1,4 +1,3 @@
-// src/screens/TicketScreen.tsx (Màn hình danh sách vé trong TabNavigator)
 import React, { useState, useCallback } from 'react';
 import {
   View,
@@ -8,35 +7,32 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
-  RefreshControl, // Thêm để làm mới danh sách
+  RefreshControl, 
   Alert,
-  StatusBar, // Thêm Alert
+  StatusBar, 
 } from 'react-native';
 import { useFocusEffect, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import AppHeader from '../components/AppHeader'; // Header cho màn hình này
 import { useAuth } from '../context/AuthContext';
-import { getUserTicketsFromCache, Ticket as TicketData } from '../hooks/database'; // Đổi tên Ticket thành TicketData
+import { getUserTicketsFromCache, Ticket as TicketData } from '../hooks/database';
 import { COLORS, FONTFAMILY, FONTSIZE, SPACING, BORDERRADIUS } from '../theme/theme';
-import { RootStackParamList } from '../../App'; // Import RootStackParamList
+import { RootStackParamList } from '../../App'; 
 import CategoryHeader from '../components/CategoryHeader';
 
-// Định nghĩa kiểu cho navigation prop của màn hình này
 type TicketScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-// Định nghĩa kiểu cho route prop để nhận refreshTimestamp
-type TicketScreenRouteProp = RouteProp<RootStackParamList, 'Tab'>; // Giả sử 'Ticket' là một screen trong 'Tab'
+type TicketScreenRouteProp = RouteProp<RootStackParamList, 'Tab'>;
 
 interface TicketScreenProps {
-  route: TicketScreenRouteProp; // route sẽ chứa params từ navigation
+  route: TicketScreenRouteProp;
 }
 
 const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
-  const { user } = useAuth(); // Lấy thông tin người dùng đang đăng nhập
+  const { user } = useAuth(); 
   const navigation = useNavigation<TicketScreenNavigationProp>();
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false); // State cho RefreshControl
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadTickets = useCallback(async () => {
     if (!user || !user.email) {
@@ -48,7 +44,7 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
     }
 
     console.log(`[TicketScreen] Đang tải vé cho người dùng: ${user.email}`);
-    if (!isRefreshing) setIsLoading(true); // Chỉ set isLoading nếu không phải là đang refresh
+    if (!isRefreshing) setIsLoading(true); 
 
     try {
       const cachedTickets = await getUserTicketsFromCache(user.email);
@@ -61,15 +57,12 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [user, isRefreshing]); // Thêm isRefreshing vào dependency
+  }, [user, isRefreshing]);
 
-  // Sử dụng useFocusEffect để tải lại vé mỗi khi màn hình được focus
-  // và khi có param refreshTimestamp (từ việc đặt vé mới)
+
   useFocusEffect(
     useCallback(() => {
-      // Kiểm tra xem có param refreshTimestamp không, nếu có nghĩa là vừa có vé mới
-      // Hoặc bạn có thể kiểm tra một param cụ thể hơn nếu muốn
-      const shouldRefresh = route.params?.params?.refreshTimestamp; // Truy cập sâu hơn vào params của screen 'Ticket' trong 'Tab'
+      const shouldRefresh = route.params?.params?.refreshTimestamp;
 
       if (shouldRefresh) {
         console.log('[TicketScreen] Nhận được tín hiệu làm mới (refreshTimestamp), đang tải lại vé...');
@@ -77,20 +70,17 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
         navigation.setParams({ params: { ...route.params?.params, refreshTimestamp: null } } as any);
       }
       loadTickets();
-    }, [loadTickets, navigation, route.params?.params?.refreshTimestamp]) // Thêm navigation và route.params vào dependencies
+    }, [loadTickets, navigation, route.params?.params?.refreshTimestamp])
   );
 
   const onRefresh = useCallback(() => {
     console.log('[TicketScreen] Đang làm mới danh sách vé...');
-    setIsRefreshing(true); // Kích hoạt trạng thái refresh
-    // loadTickets sẽ được gọi lại vì isRefreshing thay đổi (nếu bạn thêm isRefreshing vào dependency của loadTickets)
-    // hoặc gọi trực tiếp loadTickets() nếu không muốn thêm isRefreshing vào dependency của loadTickets
-    // loadTickets(); // Nếu không, useFocusEffect sẽ tự xử lý khi isRefreshing là dependency của loadTickets
+    setIsRefreshing(true); 
   }, []);
 
 
   const renderTicketItem = ({ item }: { item: TicketData }) => {
-    let displayDate = item.show_date; // Giả sử show_date đã là string "Thứ X, DD"
+    let displayDate = item.show_date; 
     let parsedSeats = [];
     try {
       parsedSeats = JSON.parse(item.seat_array_json || '[]');
@@ -103,9 +93,7 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
       <TouchableOpacity
         style={styles.ticketItemContainer}
         onPress={() => {
-          // Tạo lại đối tượng date cho TicketDetail nếu nó mong đợi object {date, day}
-          // Điều này phụ thuộc vào cách bạn lưu và truyền showDate
-          const dateParts = displayDate.split(', '); // Ví dụ: "T7, 31"
+          const dateParts = displayDate.split(', '); 
           const dayPart = dateParts.length > 1 ? dateParts[0] : '';
           const dateNumPart = dateParts.length > 1 ? parseInt(dateParts[1]) : parseInt(dateParts[0]);
 
@@ -115,7 +103,6 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
             showTime: item.show_time,
             showDate: { date: dateNumPart || 0, day: dayPart || 'N/A' },
             posterImage: item.poster_image_url,
-            // bookingId: item.booking_id_from_backend, // Nếu TicketDetailScreen cần
           });
         }}>
         <Image source={{ uri: item.poster_image_url }} style={styles.ticketItemImage} />
@@ -129,7 +116,7 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
     );
   };
 
-  if (isLoading && !isRefreshing) { // Chỉ hiển thị loading toàn màn hình khi không phải là đang kéo để refresh
+  if (isLoading && !isRefreshing) { 
     return (
       <View style={[styles.screenContainer, styles.centered]}>
         <ActivityIndicator size="large" color={COLORS.NetflixRed} />
@@ -142,14 +129,12 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
       <StatusBar hidden={false} barStyle="light-content" backgroundColor={COLORS.Black} />
       <View style={styles.appHeaderContainer}>
         <CategoryHeader title={'Vé của tôi'} />
-        {/* Bạn có thể không cần nút back ở đây vì đây là một tab chính */}
       </View>
-      {(!user || !user.email) && !isLoading ? ( // Nếu không có user và không loading -> chưa đăng nhập
+      {(!user || !user.email) && !isLoading ? (
         <View style={styles.centered}>
           <Text style={styles.emptyText}>Vui lòng đăng nhập để xem vé đã mua.</Text>
-          {/* Thêm nút điều hướng đến Login nếu muốn */}
         </View>
-      ) : tickets.length === 0 && !isLoading ? ( // Đã đăng nhập, không có vé và không loading
+      ) : tickets.length === 0 && !isLoading ? ( 
         <View style={styles.centered}>
           <Text style={styles.emptyText}>Bạn chưa có vé nào.</Text>
           <Text style={styles.emptySubText}>Hãy khám phá và đặt vé ngay!</Text>
@@ -160,12 +145,12 @@ const TicketScreen: React.FC<TicketScreenProps> = ({ route }) => {
           renderItem={renderTicketItem}
           keyExtractor={(item) => item.booking_id_from_backend}
           contentContainerStyle={styles.listContentContainer}
-          refreshControl={ // Thêm RefreshControl
+          refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={onRefresh}
-              tintColor={COLORS.NetflixRed} // Màu của spinner (iOS)
-              colors={[COLORS.NetflixRed]} // Màu của spinner (Android)
+              tintColor={COLORS.NetflixRed} 
+              colors={[COLORS.NetflixRed]} 
             />
           }
         />
@@ -181,9 +166,9 @@ const styles = StyleSheet.create({
   },
   appHeaderContainer: { 
     position: 'absolute',
-    top: (StatusBar.currentHeight || 0) - SPACING.space_32, // << CHỈNH SỬA GIÁ TRỊ NÀY
-    left: SPACING.space_10, // Hoặc SPACING.space_2 tùy theo lần sửa trước của bạn
-    right: SPACING.space_10, // Hoặc SPACING.space_2 tùy theo lần sửa trước của bạn
+    top: (StatusBar.currentHeight || 0) - SPACING.space_32,
+    left: SPACING.space_10, 
+    right: SPACING.space_10, 
     zIndex: 10,
   },
   centered: {
@@ -207,7 +192,7 @@ const styles = StyleSheet.create({
   },
   listContentContainer: {
     paddingHorizontal: SPACING.space_16,
-    paddingTop: 120, // Khoảng cách từ AppHeader (nếu có) hoặc đỉnh
+    paddingTop: 120,
     paddingBottom: SPACING.space_16,
   },
   ticketItemContainer: {
@@ -223,14 +208,14 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
   },
   ticketItemImage: {
-    width: 70, // Giảm kích thước ảnh
-    height: 105, // Giữ tỉ lệ
+    width: 70,
+    height: 105, 
     borderRadius: BORDERRADIUS.radius_4,
     marginRight: SPACING.space_12,
   },
   ticketItemInfo: {
     flex: 1,
-    justifyContent: 'space-around', // Phân bố đều thông tin
+    justifyContent: 'space-around', 
   },
   ticketItemTitle: {
     color: COLORS.White,

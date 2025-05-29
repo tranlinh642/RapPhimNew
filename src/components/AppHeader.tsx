@@ -1,7 +1,6 @@
 // AppHeader.tsx
 import * as React from 'react';
 import {Text, View, StyleSheet, TouchableOpacity} from 'react-native';
-// import CustomIcon from './CustomIcon'; // Bạn đang dùng CustomIcon ở MovieDetailsScreen, đảm bảo import ở đây nếu dùng
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   BORDERRADIUS,
@@ -10,16 +9,16 @@ import {
   FONTSIZE,
   SPACING,
 } from '../theme/theme';
-import CustomIcon from './CustomIcon'; // Giả sử bạn muốn dùng CustomIcon cho đồng hồ
+import CustomIcon from './CustomIcon'; 
 
 interface AppHeaderProps {
   name: string;
   header?: string;
   action: () => void;
-  showClock?: boolean; // Prop mới để hiển thị đồng hồ
-  runtime?: number;    // Prop mới để truyền thời lượng phim (phút)
-  customIconStyle?: object; // Prop để tùy chỉnh style của icon (ví dụ: nền mờ)
-  customTextStyle?: object;  // Prop để tùy chỉnh style của text (nếu cần)
+  showClock?: boolean; 
+  runtime?: number;    
+  customIconStyle?: object; 
+  customTextStyle?: object;  
 }
 
 const AppHeader = (props: AppHeaderProps) => {
@@ -41,7 +40,7 @@ const AppHeader = (props: AppHeaderProps) => {
       {props.header ? (
         <Text style={[styles.headerText, props.customTextStyle]}>{props.header}</Text>
       ) : (
-        <View style={styles.emptySpaceInHeader} /> // Giữ không gian nếu không có header text
+        <View style={styles.emptySpaceInHeader} />
       )}
 
       {props.showClock && props.runtime ? (
@@ -50,7 +49,7 @@ const AppHeader = (props: AppHeaderProps) => {
           <Text style={styles.runtimeTextHeader}>{formatTime(props.runtime)}</Text>
         </View>
       ) : (
-        <View style={styles.emptyContainer} /> // Giữ không gian nếu không có đồng hồ
+        <View style={styles.emptyContainer} /> 
       )}
     </View>
   );
@@ -60,38 +59,36 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', // Thay đổi để các item phân bố đều
-    paddingHorizontal: SPACING.space_10, // Giảm padding nếu cần để vừa với màn hình
-    // width: '100%', // Đảm bảo chiếm full width
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.space_10, 
   },
   iconBG: {
-    // Mặc định không có background, để MovieDetailsScreen tự quyết định
-    padding: SPACING.space_8, // Thêm padding cho dễ nhấn
+    padding: SPACING.space_8,
     borderRadius: BORDERRADIUS.radius_20,
   },
   iconStyle: {
     color: COLORS.White,
-    fontSize: FONTSIZE.size_24, // Giảm kích thước icon một chút
+    fontSize: FONTSIZE.size_24, 
   },
   headerText: {
-    flex: 1, // Cho phép co giãn nếu có tiêu đề
+    flex: 1,
     fontFamily: FONTFAMILY.poppins_medium,
     fontSize: FONTSIZE.size_20,
     textAlign: 'center',
     color: COLORS.White,
-    marginHorizontal: SPACING.space_10, // Thêm margin nếu có header text
+    marginHorizontal: SPACING.space_10, 
   },
-  emptySpaceInHeader: { // Nếu không có header text, nó sẽ co lại
+  emptySpaceInHeader: {
     flex: 1,
   },
-  emptyContainer: { // Dùng để cân bằng nếu không có đồng hồ
-    width: SPACING.space_20 * 2, // Kích thước tương tự iconBG để cân đối
+  emptyContainer: {
+    width: SPACING.space_20 * 2,
     height: SPACING.space_20 * 2,
   },
   timeContainerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)', // Nền mờ mặc định
+    backgroundColor: 'rgba(0,0,0,0.3)',
     paddingHorizontal: SPACING.space_10,
     paddingVertical: SPACING.space_4,
     borderRadius: BORDERRADIUS.radius_15,

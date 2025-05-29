@@ -15,7 +15,7 @@ import YoutubeIframe from 'react-native-youtube-iframe';
 import {
   baseImagePath,
   movieCastDetails,
-  movieDetails, // URL builder from apicalls.ts
+  movieDetails, 
   movieVideos,
 } from '../api/apicalls';
 import {
@@ -31,21 +31,19 @@ import LinearGradient from 'react-native-linear-gradient';
 import CategoryHeader from '../components/CategoryHeader';
 import CastCard from '../components/CastCard';
 
-// API call helper for movie details, now accepts language
 const getMovieDetailsAPI = async (movieid: number, language: string) => {
   try {
-    const url = movieDetails(movieid, language); // movieDetails is from apicalls.ts
+    const url = movieDetails(movieid, language); 
     const response = await fetch(url, {
       headers: {
         accept: 'application/json',
       },
     });
     if (!response.ok) {
-      // Handle HTTP errors
       console.error(
         `HTTP error ${response.status} in getMovieDetailsAPI for lang ${language}`,
       );
-      return null; // Or throw new Error(`HTTP error ${response.status}`);
+      return null; 
     }
     const json = await response.json();
     return json;
@@ -54,14 +52,13 @@ const getMovieDetailsAPI = async (movieid: number, language: string) => {
       `Something went wrong in getMovieDetailsAPI for lang ${language}`,
       error,
     );
-    return null; // Ensure function returns null on error
+    return null; 
   }
 };
 
-// API call helper for movie cast (giữ nguyên)
 const getMovieCastDetailsAPI = async (movieid: number) => {
   try {
-    const url = movieCastDetails(movieid, 'vi-VN'); // Cast có thể giữ tiếng Việt
+    const url = movieCastDetails(movieid, 'vi-VN'); 
     const response = await fetch(url, {
       headers: {
         accept: 'application/json',
@@ -82,7 +79,6 @@ const getMovieCastDetailsAPI = async (movieid: number) => {
   }
 };
 
-// API call helper for movie videos (giữ nguyên)
 const getMovieVideosAPI = async (movieid: number) => {
   try {
     const url = movieVideos(movieid);
@@ -111,7 +107,7 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
 
   const screenWidth = Dimensions.get('window').width;
   const videoAspectRatio = 16 / 9;
-  const videoWidth = screenWidth * 0.9; // Video chiếm 90% chiều rộng
+  const videoWidth = screenWidth * 0.9;
   const videoHeight = videoWidth / videoAspectRatio;
 
   const isNowPlayingMovie = route.params?.isNowPlaying === true;
@@ -120,14 +116,10 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
     const fetchData = async () => {
       const movieIdFromRoute = route.params.movieid;
       if (!movieIdFromRoute) {
-        setMovieData(null); // Dừng màn hình loading nếu không có ID
+        setMovieData(null);
         return;
       }
-
-      // 1. Lấy thông tin phim bằng tiếng Việt
       let tempMovieDataVI = await getMovieDetailsAPI(movieIdFromRoute, 'vi-VN');
-
-      // 2. Kiểm tra nếu mô tả tiếng Việt bị thiếu
       if (
         tempMovieDataVI &&
         (!tempMovieDataVI.overview || tempMovieDataVI.overview.trim() === '')
@@ -135,7 +127,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         console.log(
           `Mô tả tiếng Việt cho phim ID ${movieIdFromRoute} bị thiếu. Đang lấy mô tả tiếng Anh.`,
         );
-        // 3. Lấy thông tin phim bằng tiếng Anh
         const tempMovieDataEN = await getMovieDetailsAPI(
           movieIdFromRoute,
           'en-US',
@@ -145,7 +136,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
           tempMovieDataEN.overview &&
           tempMovieDataEN.overview.trim() !== ''
         ) {
-          // 4. Sử dụng mô tả tiếng Anh nếu có, giữ lại các chi tiết tiếng Việt khác
           tempMovieDataVI = {
             ...tempMovieDataVI,
             overview: tempMovieDataEN.overview,
@@ -153,15 +143,13 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         }
       }
 
-      // Nếu tempMovieDataVI vẫn null sau các nỗ lực (ví dụ: ID phim không hợp lệ), dừng loading
       if (!tempMovieDataVI) {
-        setMovieData(null); // Báo hiệu tải dữ liệu thất bại hoặc phim không tồn tại
+        setMovieData(null); 
         return;
       }
 
       setMovieData(tempMovieDataVI);
 
-      // Lấy video trailer
       const videosData = await getMovieVideosAPI(movieIdFromRoute);
       if (videosData && videosData.results) {
         const officialTrailer = videosData.results.find(
@@ -172,13 +160,12 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         } else {
           const anyYoutubeVideo = videosData.results.find(
             (video: any) =>
-              video.site === 'YouTube' && video.type !== 'Behind the Scenes', // Ưu tiên không phải video hậu trường
+              video.site === 'YouTube' && video.type !== 'Behind the Scenes', 
           );
           setTrailerKey(anyYoutubeVideo ? anyYoutubeVideo.key : null);
         }
       }
 
-      // Lấy danh sách diễn viên
       const tempMovieCastData = await getMovieCastDetailsAPI(movieIdFromRoute);
       setMovieCastData(tempMovieCastData?.cast);
     };
@@ -192,7 +179,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
     if (state === 'paused') setPlaying(false);
   }, []);
 
-  // Updated Loading State: movieData là undefined khi đang fetch, null nếu fetch thất bại hoặc không có ID
   if (movieData === undefined) {
     return (
       <ScrollView
@@ -200,7 +186,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         contentContainerStyle={styles.scrollViewContainer}
         bounces={false}
         showsVerticalScrollIndicator={false}>
-        {/* Giao diện khi đang tải */}
         <View style={styles.appHeaderContainerLoading}>
           <AppHeader
             name="arrow-back-outline"
@@ -214,11 +199,9 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
     );
   }
 
-  // Trường hợp movieData là null (ví dụ: ID phim không hợp lệ hoặc lỗi API)
   if (movieData === null) {
     return (
       <View style={styles.container}>
-        {/* Giao diện khi lỗi tải dữ liệu */}
         <View style={styles.appHeaderContainerLoading}>
           <AppHeader
             name="arrow-back-outline"
@@ -239,7 +222,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
       showsVerticalScrollIndicator={false}>
       <StatusBar hidden />
 
-      {/* Header chính với ảnh nền và thông tin cơ bản */}
       <View style={styles.headerContainer}>
         <ImageBackground
           source={{
@@ -265,7 +247,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         </ImageBackground>
       </View>
 
-      {/* Khu vực hiển thị Video Trailer */}
       <View style={styles.videoContainer}>
         {trailerKey ? (
           <>
@@ -277,7 +258,7 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
               onChangeState={onStateChange}
               webViewProps={{
                 scrollEnabled: false,
-                androidLayerType: 'hardware', // Tăng hiệu suất trên Android
+                androidLayerType: 'hardware', 
               }}
               initialPlayerParams={{
                 preventFullScreen: true,
@@ -285,7 +266,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
                 showClosedCaptions: false,
               }}
             />
-            {/* Nút play chỉ hiện khi video chưa play và có trailerKey */}
             {!playing && (
               <TouchableOpacity
                 style={[
@@ -317,7 +297,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         )}
       </View>
 
-      {/* Khối thông tin chính của phim (Tên, Đánh giá, Thể loại, Tagline) */}
       <View style={styles.mainInfoContainer}>
         <Text style={styles.title}>
           {movieData?.title || movieData?.original_title}
@@ -349,14 +328,12 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         ) : null}
       </View>
 
-      {/* Phần mô tả chi tiết phim */}
       <View style={styles.descriptionContainer}>
         <Text style={styles.descriptionText}>
           {movieData?.overview || 'Không có mô tả.'}
         </Text>
       </View>
 
-      {/* Danh sách diễn viên */}
       {movieCastData && movieCastData.length > 0 && (
         <View style={styles.castContainer}>
           <CategoryHeader title="Diễn viên hàng đầu" />
@@ -373,7 +350,7 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
                 isFirst={index === 0}
                 isLast={index === movieCastData.length - 1}
                 imagePath={baseImagePath('w185', item.profile_path)}
-                title={item.name || item.original_name} // Ưu tiên item.name
+                title={item.name || item.original_name}
                 subtitle={item.character}
               />
             )}
@@ -381,7 +358,6 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         </View>
       )}
 
-      {/* Nút Đặt vé (nếu có và là phim đang chiếu) */}
       {movieData && isNowPlayingMovie && (
         <View style={styles.bookingButtonContainer}>
           <TouchableOpacity
@@ -391,7 +367,7 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
                 navigation.push('SeatBooking', {
                   bgImage: baseImagePath('w780', movieData.backdrop_path),
                   PosterImage: baseImagePath('original', movieData.poster_path),
-                  movieTitle: movieData.title || movieData.original_title, // Thêm dòng này
+                  movieTitle: movieData.title || movieData.original_title,
                   movieId: route.params.movieid,
                 });
               }
@@ -416,7 +392,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollViewContainer: {
-    flexGrow: 1, // Cho phép ScrollView co giãn đúng cách
+    flexGrow: 1,
     justifyContent: 'center',
   },
   errorText: {
@@ -440,14 +416,14 @@ const styles = StyleSheet.create({
   backdropGradient: {
     height: '100%',
     width: '100%',
-    justifyContent: 'flex-start', // Để AppHeader ở trên cùng
+    justifyContent: 'flex-start', 
   },
   headerOverlay: {
     position: 'absolute',
     top: (StatusBar.currentHeight || 0) + SPACING.space_10,
     left: SPACING.space_10,
     right: SPACING.space_10,
-    zIndex: 10, // Đảm bảo AppHeader nổi trên
+    zIndex: 10, 
   },
   videoContainer: {
     alignItems: 'center',
@@ -473,7 +449,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1, // Nổi trên video
+    zIndex: 1, 
     backgroundColor: 'rgba(0,0,0,0.2)', 
   },
   mainInfoContainer: {
@@ -548,7 +524,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_14,
     color: COLORS.White,
-    lineHeight: 22, // Tăng line height cho dễ đọc
+    lineHeight: 22, 
   },
   castContainer: {
     marginTop: SPACING.space_15,
