@@ -167,12 +167,12 @@ const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route
 
     const ticketToCache: TicketData = {
       booking_id_from_backend: localBookingId,
-      user_id_from_backend: user.email,
+      user_id_from_backend: user.email, // Lưu email người dùng thay vì ID dạng số
       movie_title: newTicketDataForDisplay.movieTitle,
       poster_image_url: newTicketDataForDisplay.posterImage,
       seat_array_json: JSON.stringify(selectedSeatArray),
       show_time: newTicketDataForDisplay.showTime,
-      show_date: `${newTicketDataForDisplay.showDate.day}, ${newTicketDataForDisplay.showDate.date}`,
+      show_date: `${newTicketDataForDisplay.showDate.day}, ${newTicketDataForDisplay.showDate.date}`, // Format lại ngày hiển thị
     };
 
     try {
@@ -187,12 +187,12 @@ const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route
             {
               name: 'Tab',
               params: {
-                screen: 'Ticket',
-                params: { refreshTimestamp: Date.now() },
+                screen: 'Ticket', // Chuyển đến tab Ticket
+                params: { refreshTimestamp: Date.now() }, // Gửi timestamp để trigger refresh
               },
             },
             {
-              name: 'TicketDetail',
+              name: 'TicketDetail', // Sau đó push màn hình TicketDetail lên trên
               params: newTicketDataForDisplay,
             },
           ],
@@ -212,6 +212,7 @@ const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route
         contentContainerStyle={styles.scrollViewContent}
         bounces={false}
         showsVerticalScrollIndicator={false}>
+        {/* Phần Header với ảnh nền phim và tên phim */}
         <View style={styles.imageBackgroundContainer}>
           <ImageBackground
             source={{ uri: route.params?.bgImage }}
@@ -236,6 +237,7 @@ const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route
           {movieTitleFromParams && <Text style={styles.movieTitleText}>{movieTitleFromParams}</Text>}
         </View>
 
+        {/* Khu vực chọn ghế và chú thích trạng thái ghế */}
         <View style={styles.seatSectionContainer}>
           <View style={styles.seatLayoutContainer}>
             {twoDSeatArray?.map((row, rowIndex) => (
@@ -277,6 +279,7 @@ const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route
           </View>
         </View>
 
+        {/* Khu vực chọn ngày xem phim */}
         <View style={styles.dateSelectionContainer}>
           <FlatList
             data={dateArray}
@@ -302,6 +305,7 @@ const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route
           />
         </View>
 
+        {/* Khu vực chọn giờ xem phim */}
         <View style={styles.timeSelectionContainer}>
           <FlatList
             data={timeArray}
@@ -327,6 +331,7 @@ const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route
         </View>
       </ScrollView>
 
+      {/* Phần hiển thị giá và nút đặt vé */}
       <View style={styles.buttonPriceContainer}>
         <View style={styles.priceContainer}>
           <Text style={styles.totalPriceText}>Tổng cộng</Text>
@@ -349,28 +354,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: SPACING.space_20 * 6,
+    paddingBottom: SPACING.space_20 * 6, // Đảm bảo có đủ không gian cho nút bấm ở cuối
   },
-  imageBackgroundContainer: {},
+  imageBackgroundContainer: {
+    // không cần style cụ thể ở đây nếu các phần tử con đã định vị tốt
+  },
   ImageBG: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    aspectRatio: 16 / 9, // Giữ tỷ lệ khung hình cho ảnh nền
   },
   linearGradient: {
     height: '100%',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between', // Đẩy AppHeader lên trên
   },
   appHeaderContainer: {
-    paddingHorizontal: SPACING.space_12,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : SPACING.space_10,
+    paddingHorizontal: SPACING.space_12, // Giảm padding để icon không quá sát mép
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : SPACING.space_10, // Xử lý chiều cao StatusBar
   },
   screenText: {
     textAlign: 'center',
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_10,
     color: COLORS.WhiteRGBA75,
-    paddingVertical: SPACING.space_4,
-    backgroundColor: COLORS.Black,
+    paddingVertical: SPACING.space_4, // Giảm padding nếu không cần thiết
+    backgroundColor: COLORS.Black, // Để chữ nổi bật hơn nếu ảnh nền sáng
   },
   movieTitleText: {
     textAlign: 'center',
@@ -378,25 +385,25 @@ const styles = StyleSheet.create({
     fontSize: FONTSIZE.size_18,
     color: COLORS.White,
     paddingVertical: SPACING.space_8,
-    backgroundColor: COLORS.Black,
+    backgroundColor: COLORS.Black, // Để chữ nổi bật hơn
   },
   seatSectionContainer: {
     marginVertical: SPACING.space_20,
   },
   seatLayoutContainer: {
-    gap: SPACING.space_10,
-    alignItems: 'center',
+    gap: SPACING.space_10, // Khoảng cách giữa các hàng ghế
+    alignItems: 'center', // Căn giữa các hàng ghế
   },
   seatRow: {
     flexDirection: 'row',
-    gap: SPACING.space_12,
+    gap: SPACING.space_12, // Khoảng cách giữa các ghế trong một hàng
     justifyContent: 'center',
   },
   seatIcon: {
-    fontSize: FONTSIZE.size_24,
-    color: COLORS.White,
+    fontSize: FONTSIZE.size_24, // Kích thước ghế
+    color: COLORS.White, // Màu ghế mặc định
   },
-  emptySeatIcon: {
+  emptySeatIcon: { // Placeholder cho lối đi
     width: FONTSIZE.size_24,
     height: FONTSIZE.size_24,
   },
@@ -405,7 +412,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.space_20,
     marginBottom: SPACING.space_10,
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-evenly', // Phân bổ đều các mục chú thích
   },
   radioContainer: {
     flexDirection: 'row',
@@ -421,14 +428,14 @@ const styles = StyleSheet.create({
     color: COLORS.White,
   },
   dateSelectionContainer: {
-    marginVertical: SPACING.space_20,
+    marginVertical: SPACING.space_20, // Khoảng cách trên dưới cho phần chọn ngày
   },
   timeSelectionContainer: {
-    marginBottom: SPACING.space_20,
+    marginBottom: SPACING.space_20, // Khoảng cách dưới cho phần chọn giờ
   },
-  flatListContainer: {
+  flatListContainer: { // Style cho contentContainer của FlatList ngày và giờ
     gap: SPACING.space_12,
-    paddingHorizontal: SPACING.space_12,
+    paddingHorizontal: SPACING.space_12, // Tránh item đầu/cuối bị cắt nếu có marginLeft/Right
   },
   dateContainer: {
     width: SPACING.space_10 * 7,
@@ -438,7 +445,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'transparent', // Mặc định không có border
   },
   dayText: {
     fontFamily: FONTFAMILY.poppins_regular,
@@ -456,7 +463,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.WhiteRGBA50,
     paddingHorizontal: SPACING.space_18,
     borderRadius: BORDERRADIUS.radius_25,
-    backgroundColor: COLORS.DarkGrey,
+    backgroundColor: COLORS.DarkGrey, // Nền cho các ô thời gian
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -471,13 +478,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.space_20,
     paddingVertical: SPACING.space_12,
-    paddingBottom: Platform.OS === 'ios' ? SPACING.space_28 : SPACING.space_12,
+    paddingBottom: Platform.OS === 'ios' ? SPACING.space_28 : SPACING.space_12, // Thêm padding cho "tai thỏ" iOS
     backgroundColor: COLORS.Black,
-    position: 'absolute',
+    position: 'absolute', // Đặt ở cuối màn hình
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
+    borderTopWidth: 1, // Thêm đường kẻ phân cách
     borderColor: COLORS.Grey,
   },
   priceContainer: {

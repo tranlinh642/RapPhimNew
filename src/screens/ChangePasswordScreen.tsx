@@ -1,4 +1,3 @@
-// src/screens/ChangePasswordScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -17,23 +16,25 @@ import {
   FONTSIZE,
   SPACING,
   BORDERRADIUS,
-} from '../theme/theme'; //
+} from '../theme/theme';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import { updateLocalUserPassword } from '../hooks/database';
-// import Ionicons from 'react-native-vector-icons/Ionicons'; // Bạn có thể thêm icon nếu muốn
 
+//  Định nghĩa Props cho Component
 interface ChangePasswordScreenProps {
   navigation: any;
 }
 
 const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation }) => {
+  // Khai báo State
   const { user } = useAuth();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Xử lý logic thay đổi mật khẩu
   const handlePasswordChange = async () => {
     if (!user || !user.email) {
       Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
@@ -47,10 +48,8 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation 
       Alert.alert('Lỗi', 'Mật khẩu mới và xác nhận mật khẩu không khớp.');
       return;
     }
-    // Kiểm tra độ dài mật khẩu mới đã có trong hàm updateLocalUserPassword,
-    // nhưng bạn có thể thêm một lần nữa ở đây để phản hồi nhanh hơn.
     if (newPassword.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu mới phải có ít nhất 6 ký tự.'); //
+      Alert.alert('Lỗi', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
       return;
     }
     if (oldPassword === newPassword) {
@@ -66,9 +65,6 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation 
         'Đổi mật khẩu thành công! Vui lòng đăng nhập lại với mật khẩu mới nếu được yêu cầu.',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
-      // Cân nhắc: Có thể bạn muốn tự động đăng xuất người dùng sau khi đổi mật khẩu thành công
-      // để họ phải đăng nhập lại bằng mật khẩu mới, tăng cường bảo mật.
-      // await logout(); // Nếu bạn có hàm logout từ useAuth() và muốn tự động đăng xuất.
     } catch (error: any) {
       Alert.alert('Đổi mật khẩu thất bại', error.message || 'Đã có lỗi xảy ra.');
     } finally {
@@ -76,6 +72,7 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation 
     }
   };
 
+  // Phần: Giao diện người dùng (UI)
   return (
     <View style={styles.screenContainer}>
       <StatusBar hidden={false} barStyle="light-content" backgroundColor={COLORS.Black} />
@@ -97,18 +94,18 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation 
             value={oldPassword}
             onChangeText={setOldPassword}
             secureTextEntry
-            placeholderTextColor={COLORS.WhiteRGBA50} //
+            placeholderTextColor={COLORS.WhiteRGBA50}
             autoCapitalize="none"
           />
 
           <Text style={styles.label}>Mật khẩu mới</Text>
           <TextInput
             style={styles.input}
-            placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)" //
+            placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
             value={newPassword}
             onChangeText={setNewPassword}
             secureTextEntry
-            placeholderTextColor={COLORS.WhiteRGBA50} //
+            placeholderTextColor={COLORS.WhiteRGBA50}
             autoCapitalize="none"
           />
 
@@ -119,7 +116,7 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation 
             value={confirmNewPassword}
             onChangeText={setConfirmNewPassword}
             secureTextEntry
-            placeholderTextColor={COLORS.WhiteRGBA50} //
+            placeholderTextColor={COLORS.WhiteRGBA50}
             autoCapitalize="none"
           />
 
@@ -139,55 +136,55 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation 
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: COLORS.Black, //
+    backgroundColor: COLORS.Black,
   },
   appHeaderContainer: {
-    paddingHorizontal: SPACING.space_20, //
-    paddingTop: (StatusBar.currentHeight || 0) + SPACING.space_10, //
+    paddingHorizontal: SPACING.space_20,
+    paddingTop: (StatusBar.currentHeight || 0) + SPACING.space_10,
   },
   scrollViewContent: {
     flexGrow: 1,
-    justifyContent: 'center', // Căn giữa form nếu nội dung ít
+    justifyContent: 'center',
   },
   formContainer: {
-    paddingHorizontal: SPACING.space_24, //
-    paddingVertical: SPACING.space_20, //
+    paddingHorizontal: SPACING.space_24,
+    paddingVertical: SPACING.space_20,
   },
   label: {
-    fontFamily: FONTFAMILY.poppins_regular, //
-    fontSize: FONTSIZE.size_14, //
-    color: COLORS.WhiteRGBA75, //
-    marginBottom: SPACING.space_8, //
+    fontFamily: FONTFAMILY.poppins_regular,
+    fontSize: FONTSIZE.size_14,
+    color: COLORS.WhiteRGBA75,
+    marginBottom: SPACING.space_8,
   },
   input: {
-    backgroundColor: COLORS.DarkGrey, //
-    color: COLORS.White, //
-    borderRadius: BORDERRADIUS.radius_8, //
-    paddingVertical: SPACING.space_15, //
-    paddingHorizontal: SPACING.space_16, //
-    marginBottom: SPACING.space_18, //
-    fontSize: FONTSIZE.size_14, //
-    fontFamily: FONTFAMILY.poppins_regular, //
+    backgroundColor: COLORS.DarkGrey,
+    color: COLORS.White,
+    borderRadius: BORDERRADIUS.radius_8,
+    paddingVertical: SPACING.space_15,
+    paddingHorizontal: SPACING.space_16,
+    marginBottom: SPACING.space_18,
+    fontSize: FONTSIZE.size_14,
+    fontFamily: FONTFAMILY.poppins_regular,
     borderWidth: 1,
-    borderColor: COLORS.Grey, //
+    borderColor: COLORS.Grey,
   },
   button: {
-    backgroundColor: COLORS.NetflixRed, //
-    paddingVertical: SPACING.space_16, //
-    borderRadius: BORDERRADIUS.radius_8, //
+    backgroundColor: COLORS.NetflixRed,
+    paddingVertical: SPACING.space_16,
+    borderRadius: BORDERRADIUS.radius_8,
     alignItems: 'center',
-    marginTop: SPACING.space_10, //
+    marginTop: SPACING.space_10,
   },
   buttonText: {
-    color: COLORS.White, //
-    fontSize: FONTSIZE.size_16, //
-    fontFamily: FONTFAMILY.poppins_semibold, //
+    color: COLORS.White,
+    fontSize: FONTSIZE.size_16,
+    fontFamily: FONTFAMILY.poppins_semibold,
   },
   loader: {
-    height: 58, // Chiều cao tương đương nút bấm
+    height: 58,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.space_10, //
+    marginTop: SPACING.space_10,
   },
 });
 

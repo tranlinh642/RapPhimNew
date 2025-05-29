@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -14,7 +13,7 @@ import { COLORS, FONTFAMILY, FONTSIZE, SPACING, BORDERRADIUS } from '../theme/th
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
-import Fontisto from 'react-native-vector-icons/Fontisto'; // THÊM IMPORT FONTISTO
+import Fontisto from 'react-native-vector-icons/Fontisto';
 
 type LoginScreenNavigationProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -36,7 +35,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
       if (success) {
         console.log('Đăng nhập thành công thông qua AuthContext!');
       } else {
-        Alert.alert('Đăng nhập thất bại', 'Email hoặc mật khẩu không đúng.');
+        // Thông báo lỗi đã được xử lý bên trong useAuth,
       }
     } catch (error: any) {
       Alert.alert('Đăng nhập thất bại', error.message || 'Đã có lỗi không mong muốn xảy ra.');
@@ -49,21 +48,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
-        {/* PHẦN LOGO CVL - BẮT ĐẦU */}
+        {/* Khối Logo */}
         <View style={styles.logoContainer}>
           <Fontisto name="film" style={styles.logoIcon} />
           <Text style={styles.logoText}>CVL Cinema</Text>
         </View>
-        {/* PHẦN LOGO CVL - KẾT THÚC */}
 
+        {/* Khối Tiêu đề chào mừng */}
         <Text style={styles.welcomeTitle}>Welcome Back</Text>
         <Text style={styles.subtitle}>Please sign in to continue</Text>
 
+        {/* Form Đăng Nhập */}
         <TextInput
           style={styles.input}
-          placeholder="Email" // Đổi lại placeholder cho rõ ràng hơn
+          placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -83,6 +83,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
           <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
 
+        {/* Nút Đăng nhập hoặc Hiển thị loading */}
         {authIsLoading ? (
           <ActivityIndicator size="large" color={COLORS.NetflixRed} style={styles.loader} />
         ) : (
@@ -91,6 +92,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
           </TouchableOpacity>
         )}
 
+        {/* Liên kết Đăng ký */}
         <TouchableOpacity
           style={styles.registerLinkContainer}
           onPress={() => navigation.navigate('Register')}
@@ -114,25 +116,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.space_24,
     paddingBottom: SPACING.space_20,
   },
-  // STYLE CHO LOGO CVL - BẮT ĐẦU
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.space_28,
+    marginBottom: SPACING.space_28, 
   },
   logoIcon: {
-    fontSize: 90, // Kích thước tương đương "Welcome Back"
-    color: COLORS.NetflixRed,   // Màu đỏ
-    marginRight: SPACING.space_10, // Khoảng cách giữa icon và chữ CVL
+    fontSize: FONTSIZE.size_30 * 2,
+    color: COLORS.NetflixRed,
+    marginRight: SPACING.space_10,
   },
   logoText: {
-    fontSize: 40, // Kích thước tương đương "Welcome Back"
-    color: COLORS.NetflixRed,   // Màu đỏ
-    fontFamily: FONTFAMILY.poppins_bold, // Cùng font weight với "Welcome Back"
-    marginTop: SPACING.space_32,
+    fontSize: FONTSIZE.size_30 * 1.5,
+    color: COLORS.NetflixRed,
+    fontFamily: FONTFAMILY.poppins_bold,
   },
-  // STYLE CHO LOGO CVL - KẾT THÚC
   welcomeTitle: {
     fontSize: FONTSIZE.size_30,
     color: COLORS.White,
@@ -156,6 +155,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.space_18,
     fontSize: FONTSIZE.size_14,
     fontFamily: FONTFAMILY.poppins_regular,
+    borderWidth: 1, 
+    borderColor: COLORS.Grey, 
   },
   forgotPasswordText: {
     color: COLORS.NetflixRed,
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   registerLink: {
-    color: COLORS.White,
+    color: COLORS.White, 
     fontFamily: FONTFAMILY.poppins_semibold,
   },
   loader: {

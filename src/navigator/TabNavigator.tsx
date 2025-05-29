@@ -86,7 +86,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Ticket"
-        component={TicketScreen}
+        component={TicketScreen as any}
         options={{
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (

@@ -181,10 +181,10 @@ const styles = StyleSheet.create({
   },
   appHeaderContainer: { 
     position: 'absolute',
-  top: (StatusBar.currentHeight || 0) + SPACING.space_2, // Giảm từ space_10 xuống space_2
-  left: SPACING.space_2,
-  right: SPACING.space_2,
-  zIndex: 10,
+    top: (StatusBar.currentHeight || 0) - SPACING.space_32, // << CHỈNH SỬA GIÁ TRỊ NÀY
+    left: SPACING.space_10, // Hoặc SPACING.space_2 tùy theo lần sửa trước của bạn
+    right: SPACING.space_10, // Hoặc SPACING.space_2 tùy theo lần sửa trước của bạn
+    zIndex: 10,
   },
   centered: {
     flex: 1,

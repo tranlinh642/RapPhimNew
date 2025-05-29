@@ -100,11 +100,12 @@ const HomeScreen = ({ navigation }: any) => {
   };
 
   if (
-    nowPlayingMoviesList === undefined ||
+    nowPlayingMoviesList === undefined || // Sửa lại điều kiện kiểm tra state ban đầu
     popularMoviesList === undefined ||
     upcomingMoviesList === undefined
   ) {
     return (
+      // {/* Giao diện khi đang tải dữ liệu */}
       <ScrollView style={styles.container} bounces={false}>
         <StatusBar hidden />
         <View style={styles.InputHeaderContainer}>
@@ -120,9 +121,12 @@ const HomeScreen = ({ navigation }: any) => {
   return (
     <ScrollView style={styles.container} bounces={false}>
       <StatusBar hidden />
+      {/* Thanh tìm kiếm */}
       <View style={styles.InputHeaderContainer}>
         <InputHeader searchFunction={searchMoviesFunction} />
       </View>
+
+      {/* Danh sách phim Đang chiếu */}
       <CategoryHeader title={'NowPlaying'} />
       <FlatList
         data={nowPlayingMoviesList}
@@ -149,8 +153,8 @@ const HomeScreen = ({ navigation }: any) => {
                 navigation.push('MovieDetails', { movieid: item.id, isNowPlaying: true });
               }}
               cardWidth={width * 0.7}
-              isFirst={index === 0 ? true : false}
-              isLast={index === nowPlayingMoviesList?.length - 1 ? true : false}
+              isFirst={index === 0 ? true : false} // Cần điều chỉnh nếu dummy items ảnh hưởng index
+              isLast={index === nowPlayingMoviesList?.length - 1 ? true : false} // Cần điều chỉnh
               title={item.title || item.original_title}
               imagePath={baseImagePath('w780', item.poster_path)}
               genre={item.genre_ids.slice(1, 4)}
@@ -160,6 +164,8 @@ const HomeScreen = ({ navigation }: any) => {
           );
         }}
       />
+
+      {/* Danh sách phim Phổ biến */}
       <CategoryHeader title={'Popular'} />
       <FlatList
         data={popularMoviesList}
@@ -182,6 +188,8 @@ const HomeScreen = ({ navigation }: any) => {
           />
         )}
       />
+
+      {/* Danh sách phim Sắp chiếu */}
       <CategoryHeader title={'Upcoming'} />
       <FlatList
         data={upcomingMoviesList}

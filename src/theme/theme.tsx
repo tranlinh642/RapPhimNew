@@ -42,7 +42,7 @@ interface Color {
   DarkGrey: string;
   Yellow: string;
   White: string;
-  Red: string;
+  Blue: string;
   NetflixRed: string; // Thêm màu đỏ Netflix
   NetflixDark: string; // Thêm màu đen Netflix
   NetflixRedRGB0: string;  // Màu NetflixRed với Alpha = 0 (trong suốt hoàn toàn)
@@ -63,7 +63,7 @@ export const COLORS: Color = {
   DarkGrey: '#0b0b0b',
   Yellow: '#E1CD17',
   White: '#FFFFFF',
-  Red: '#E50914', // Sửa bỏ dấu # thừa
+  Blue: '#5fb2ce',
   NetflixRed: '#E50914', // Màu đỏ Netflix chính thức
   NetflixDark: '#141414', // Màu đen Netflix
   NetflixRedRGB0: 'rgba(229, 9, 20, 0)',    // NetflixRed với độ trong suốt 0%

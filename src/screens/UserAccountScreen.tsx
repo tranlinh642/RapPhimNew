@@ -112,7 +112,7 @@ const UserAccountScreen = ({ navigation }: any) => {
           <View style={styles.profileContainer}>
             <Image
               source={require('../assets/image/avatar.png')}
-              style={styles.avatarImage} // Style cho avatar sẽ được cập nhật ở dưới
+              style={styles.avatarImage}
             />
             
             {!isEditingName ? (
@@ -155,7 +155,6 @@ const UserAccountScreen = ({ navigation }: any) => {
           </View>
         </View>
         
-        {/* Các nút hành động chính - sẽ được đẩy xuống dưới */}
         <View style={styles.actionsSection}>
           <TouchableOpacity style={styles.actionButtonFullWidth} onPress={navigateToChangePassword}>
             <Ionicons name="lock-closed-outline" size={FONTSIZE.size_20} color={COLORS.WhiteRGBA75} style={styles.actionIcon} />
@@ -185,24 +184,21 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingHorizontal: SPACING.space_24, // Thêm padding ngang cho toàn bộ scrollview content
-    justifyContent: 'space-between', // Đẩy actionsSection xuống dưới nếu có không gian
+    paddingHorizontal: SPACING.space_24, 
+    justifyContent: 'space-between',
   },
   topContent: {
-    // Đây là container cho nội dung phía trên actionsSection
-    // Không cần style đặc biệt ở đây nếu scrollContainer đã có justify_content
   },
   profileContainer: {
     alignItems: 'center',
     paddingVertical: SPACING.space_20, 
-    // marginBottom đã bị xóa, actionsSection sẽ tự cách ra do justify-content
   },
   avatarImage: {
-    height: 300, // THAY ĐỔI: Tăng kích thước avatar
-    width: 300,  // THAY ĐỔI: Tăng kích thước avatar
-    borderRadius: 75, // THAY ĐỔI: Tăng một nửa height/width
+    height: 300, 
+    width: 300,  
+    borderRadius: 75, 
     marginBottom: SPACING.space_20,
-    borderColor: COLORS.NetflixRed,
+    borderColor: COLORS.Blue,
     borderWidth: 2,
   },
   displayNameContainer: {
@@ -221,7 +217,7 @@ const styles = StyleSheet.create({
     padding: SPACING.space_4,
   },
   editNameContainer: {
-    width: '90%', // Điều chỉnh chiều rộng nếu cần
+    width: '90%', 
     alignItems: 'center',
     marginBottom: SPACING.space_10,
   },
@@ -256,12 +252,10 @@ const styles = StyleSheet.create({
     fontSize: FONTSIZE.size_14,
     color: COLORS.WhiteRGBA75,
     textAlign: 'center',
-    // marginBottom đã bị xóa, để actionsSection tự cách ra
   },
   actionsSection: {
-    // marginHorizontal: SPACING.space_24, // Đã chuyển lên scrollContainer
-    marginTop: SPACING.space_20, // Khoảng cách với nội dung phía trên nếu màn hình đầy
-    paddingBottom: SPACING.space_20, // Khoảng cách với mép dưới màn hình
+    marginTop: SPACING.space_20,
+    paddingBottom: SPACING.space_20, 
   },
   actionButtonFullWidth: {
     backgroundColor: COLORS.DarkGrey,

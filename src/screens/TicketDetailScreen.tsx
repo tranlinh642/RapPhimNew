@@ -188,13 +188,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.Black,
   },
   appHeaderContainer: {
-    paddingHorizontal: SPACING.space_20, // Giảm padding cho AppHeader
-    paddingTop: SPACING.space_20,      // Giảm padding cho AppHeader
-    // position: 'absolute', // Nếu muốn AppHeader nổi trên ScrollView
-    // top: 0,
-    // left: 0,
-    // right: 0,
-    // zIndex: 10,
+    paddingHorizontal: 40, // Giảm padding cho AppHeader
+    paddingTop: 40,      // Giảm padding cho AppHeader
   },
   loadingView: { // Dùng cho cả ActivityIndicator và Text lỗi
     flex: 1,

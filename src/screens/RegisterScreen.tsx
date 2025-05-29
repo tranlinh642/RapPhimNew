@@ -1,4 +1,3 @@
-// src/screens/RegisterScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -46,8 +45,6 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (error: any) {
-      // Lỗi có thể là do email đã tồn tại (nếu bạn đã implement kiểm tra đó trong registerLocalUser)
-      // Hoặc lỗi SQLite khác.
       Alert.alert('Đăng ký thất bại', error.message || 'Đã có lỗi xảy ra trong quá trình đăng ký.');
     } finally {
       setIsLoading(false);
@@ -62,8 +59,6 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           name="arrow-back-outline"
           header="Tạo Tài Khoản"
           action={() => navigation.goBack()}
-          // customIconStyle nếu bạn muốn tùy chỉnh thêm style cho icon/background của icon AppHeader
-          // customIconStyle={{ backgroundColor: COLORS.BlackRGB10 }} // Ví dụ
         />
       </View>
       <ScrollView
@@ -128,11 +123,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.Black,
   },
   appHeaderContainer: {
-    position: 'absolute', // Đảm bảo AppHeader nằm trên backdrop
+    position: 'absolute',
     top: (StatusBar.currentHeight || 0) + SPACING.space_10,
     left: SPACING.space_10,
     right: SPACING.space_10,
-    zIndex: 10, // Đảm bảo AppHeader nổi trên
+    zIndex: 10, 
   },
   scrollViewContent: {
     flexGrow: 1,
