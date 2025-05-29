@@ -1,26 +1,25 @@
 // src/hooks/database.ts
-
-import SQLite, { type ResultSet, type Transaction, type SQLiteDatabase, type SQLError } from 'react-native-sqlite-storage';
+import SQLite, { type Transaction, type SQLiteDatabase, type SQLError } from 'react-native-sqlite-storage';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
 // --- Cấu hình ---
 const DATABASE_NAME = 'RapPhimDB.db';
 const DATABASE_LOCATION = 'default';
 SQLite.enablePromise(true);
-// SQLite.DEBUG(true);
+// SQLite.DEBUG(true); // Bật để debug chi tiết nếu cần
 
 let dbInstance: SQLiteDatabase | null = null;
 
 // --- Định nghĩa Interfaces ---
 export interface UserProfile {
-  id_from_backend: string; // Trong kịch bản cục bộ, đây sẽ là email
+  id_from_backend: string;
   name: string | null;
-  email: string | null; // email có thể là string hoặc null
+  email: string | null;
 }
 
 export interface Ticket {
   booking_id_from_backend: string;
-  user_id_from_backend: string; // Sẽ là email của người dùng cục bộ
+  user_id_from_backend: string;
   movie_title: string;
   poster_image_url: string;
   seat_array_json: string;
@@ -30,45 +29,179 @@ export interface Ticket {
 
 // --- Khởi tạo DB và Tạo Bảng ---
 export const initDB = async (): Promise<SQLiteDatabase> => {
-  if (dbInstance) return Promise.resolve(dbInstance);
+  if (dbInstance) {
+    console.log('[DB] Tái sử dụng instance cơ sở dữ liệu hiện có');
+    return Promise.resolve(dbInstance);
+  }
   try {
     const db = await SQLite.openDatabase({ name: DATABASE_NAME, location: DATABASE_LOCATION });
-    console.log('[DB] Database ĐÃ MỞ');
-    await db.transaction(async (tx: Transaction) => {
-      await tx.executeSql(`
-        CREATE TABLE IF NOT EXISTS LocalCredentials (
-          email TEXT PRIMARY KEY NOT NULL,
-          password_hash TEXT NOT NULL,
-          name TEXT
+    console.log('[DB] Đã mở cơ sở dữ liệu:', DATABASE_NAME);
+
+    // Kiểm tra trạng thái cơ sở dữ liệu ban đầu
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          "SELECT name FROM sqlite_master WHERE type='table';",
+          [],
+          (_, results) => {
+            const tableNames = Array.from({ length: results.rows.length }, (_, i) => results.rows.item(i).name);
+            console.log('[DB] Các bảng hiện có trước khi khởi tạo:', tableNames);
+            resolve();
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi kiểm tra trạng thái cơ sở dữ liệu:', error);
+            reject(error);
+            return true;
+          }
         );
-      `);
-      console.log('[DB] Bảng "LocalCredentials" đã được đảm bảo.');
-      await tx.executeSql(`
-        CREATE TABLE IF NOT EXISTS Users (
-          id_from_backend TEXT PRIMARY KEY NOT NULL,
-          name TEXT,
-          email TEXT
-        );
-      `);
-      console.log('[DB] Bảng "Users" đã được đảm bảo.');
-      await tx.executeSql(`
-        CREATE TABLE IF NOT EXISTS UserTickets (
-          booking_id_from_backend TEXT PRIMARY KEY NOT NULL,
-          user_id_from_backend TEXT NOT NULL,
-          movie_title TEXT,
-          poster_image_url TEXT,
-          seat_array_json TEXT,
-          show_time TEXT,
-          show_date TEXT,
-          FOREIGN KEY (user_id_from_backend) REFERENCES LocalCredentials(email) ON DELETE CASCADE
-        );
-      `);
-      console.log('[DB] Bảng "UserTickets" đã được đảm bảo.');
+      });
     });
+
+    // Kích hoạt khóa ngoại
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'PRAGMA foreign_keys = ON;',
+          [],
+          () => {
+            console.log('[DB] Đã bật khóa ngoại');
+            resolve();
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi bật khóa ngoại:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+
+    // Tạo bảng LocalCredentials
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          `CREATE TABLE IF NOT EXISTS LocalCredentials (
+            email TEXT PRIMARY KEY NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT
+          );`,
+          [],
+          () => {
+            console.log('[DB] Đã tạo hoặc xác nhận bảng LocalCredentials');
+            resolve();
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi tạo bảng LocalCredentials:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+
+    // Xác nhận bảng LocalCredentials
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='LocalCredentials';",
+          [],
+          (_, results) => {
+            if (results.rows.length > 0) {
+              console.log('[DB] Xác nhận: Bảng LocalCredentials tồn tại');
+              resolve();
+            } else {
+              console.error('[DB] Lỗi xác nhận: Bảng LocalCredentials không tồn tại');
+              reject(new Error('Bảng LocalCredentials không tồn tại'));
+            }
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi kiểm tra bảng LocalCredentials:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+
+    // Tạo bảng Users
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          `CREATE TABLE IF NOT EXISTS Users (
+            id_from_backend TEXT PRIMARY KEY NOT NULL,
+            name TEXT,
+            email TEXT
+          );`,
+          [],
+          () => {
+            console.log('[DB] Đã tạo hoặc xác nhận bảng Users');
+            resolve();
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi tạo bảng Users:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+
+    // Tạo bảng UserTickets (bỏ khóa ngoại tạm thời để debug)
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          `CREATE TABLE IF NOT EXISTS UserTickets (
+            booking_id_from_backend TEXT PRIMARY KEY NOT NULL,
+            user_id_from_backend TEXT NOT NULL,
+            movie_title TEXT,
+            poster_image_url TEXT,
+            seat_array_json TEXT,
+            show_time TEXT,
+            show_date TEXT
+          );`,
+          [],
+          () => {
+            console.log('[DB] Đã tạo hoặc xác nhận bảng UserTickets');
+            resolve();
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi tạo bảng UserTickets:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+
+    // Xác nhận bảng UserTickets
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='UserTickets';",
+          [],
+          (_, results) => {
+            if (results.rows.length > 0) {
+              console.log('[DB] Xác nhận: Bảng UserTickets tồn tại');
+              resolve();
+            } else {
+              console.error('[DB] Lỗi xác nhận: Bảng UserTickets không tồn tại');
+              reject(new Error('Bảng UserTickets không tồn tại'));
+            }
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi kiểm tra bảng UserTickets:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+
     dbInstance = db;
+    console.log('[DB] Hoàn tất khởi tạo cơ sở dữ liệu');
     return db;
   } catch (error) {
-    console.error('[DB] Lỗi khi mở hoặc khởi tạo database:', error);
+    console.error('[DB] Lỗi khi khởi tạo cơ sở dữ liệu:', error);
     throw error;
   }
 };
@@ -78,7 +211,39 @@ export const getDBInstance = async (): Promise<SQLiteDatabase> => {
   return dbInstance;
 };
 
-// --- Quản lý Đăng ký/Đăng nhập Cục bộ (SQLite) ---
+// --- Debug Cơ sở dữ liệu ---
+export const debugDatabaseTables = async (): Promise<string[]> => {
+  const db = await getDBInstance();
+  try {
+    const tables = await new Promise<string[]>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          "SELECT name FROM sqlite_master WHERE type='table';",
+          [],
+          (_, results) => {
+            const tableNames: string[] = [];
+            for (let i = 0; i < results.rows.length; i++) {
+              tableNames.push(results.rows.item(i).name);
+            }
+            resolve(tableNames);
+          },
+          (_, error) => {
+            console.error('[DB] Lỗi khi liệt kê bảng:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+    console.log('[DB] Các bảng trong database:', tables);
+    return tables;
+  } catch (error) {
+    console.error('[DB Debug] Lỗi khi truy vấn danh sách bảng:', error);
+    return [];
+  }
+};
+
+// --- Quản lý Đăng ký/Đăng nhập Cục bộ ---
 const simpleHash = (password: string): string => {
   let hash = 0;
   for (let i = 0; i < password.length; i++) {
@@ -97,7 +262,11 @@ export const registerLocalUser = async (name: string, email: string, password: s
         'SELECT email FROM LocalCredentials WHERE email = ?',
         [email.toLowerCase()],
         (_, results) => resolve(results.rows.length > 0 ? results.rows.item(0) : null),
-        error => reject(error)
+        error => {
+          console.error('[DB] Lỗi kiểm tra email:', error);
+          reject(error);
+          return true;
+        }
       );
     });
   });
@@ -105,17 +274,26 @@ export const registerLocalUser = async (name: string, email: string, password: s
   if (existingUser) {
     throw new Error('Email đã được đăng ký.');
   }
+
   const passwordHash = simpleHash(password);
   try {
-    await db.transaction(async (tx: Transaction) => {
-      await tx.executeSql(
-        'INSERT INTO LocalCredentials (name, email, password_hash) VALUES (?, ?, ?);',
-        [name, email.toLowerCase(), passwordHash]
-      );
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'INSERT INTO LocalCredentials (name, email, password_hash) VALUES (?, ?, ?);',
+          [name, email.toLowerCase(), passwordHash],
+          () => resolve(),
+          (_, error) => {
+            console.error(`[DB] Lỗi đăng ký người dùng ${email}:`, error);
+            reject(error);
+            return true;
+          }
+        );
+      });
     });
-    console.log(`[DB LocalAuth] Người dùng ${email} đã đăng ký cục bộ.`);
+    console.log(`[DB] Người dùng ${email} đã đăng ký thành công.`);
   } catch (error) {
-    console.error(`[DB LocalAuth] Lỗi khi đăng ký người dùng ${email} cục bộ:`, error);
+    console.error(`[DB] Lỗi khi đăng ký người dùng ${email}:`, error);
     throw error;
   }
 };
@@ -123,100 +301,107 @@ export const registerLocalUser = async (name: string, email: string, password: s
 export const loginLocalUser = async (email: string, password: string): Promise<UserProfile | null> => {
   const db = await getDBInstance();
   try {
-    const userCredential: { name: string | null, email: string, password_hash: string } | null = await new Promise((resolve, reject) => {
-      db.transaction(tx => {
-        tx.executeSql(
-          'SELECT name, email, password_hash FROM LocalCredentials WHERE email = ?',
-          [email.toLowerCase()],
-          (_, results) => resolve(results.rows.length > 0 ? results.rows.item(0) : null),
-          error => reject(error)
-        );
+    const userCredential = await new Promise<{ name: string; email: string; password_hash: string } | null>(
+      (resolve, reject) => {
+        db.transaction(tx => {
+          tx.executeSql(
+            'SELECT name, email, password_hash FROM LocalCredentials WHERE email = ?',
+            [email.toLowerCase()],
+            (_, results) => resolve(results.rows.length > 0 ? results.rows.item(0) : null),
+            error => {
+              console.error('[DB] Lỗi truy vấn:', error);
+              reject(error);
+              return true;
+            }
+          );
+        });
       });
-    });
 
     if (!userCredential) {
-      console.log('[DB LocalAuth] Không tìm thấy email.');
+      console.log('[DB] Không tìm thấy email.');
       return null;
     }
+
     const inputPasswordHash = simpleHash(password);
     if (inputPasswordHash === userCredential.password_hash) {
-      console.log(`[DB LocalAuth] Người dùng ${email} đăng nhập cục bộ thành công.`);
-      const userProfileData: UserProfile = {
-        id_from_backend: userCredential.email, // Dùng email làm ID
+      console.log(`[DB] Người dùng ${email} đăng nhập thành công.`);
+      const userProfile: UserProfile = {
+        id_from_backend: userCredential.email,
         name: userCredential.name,
         email: userCredential.email,
       };
-      await saveLoggedInUserCache(userProfileData); // Lưu vào cache Users
-      return userProfileData;
+      await saveLoggedInUserCache(userProfile); // Sửa lỗi: gọi đúng hàm
+      return userProfile;
     } else {
-      console.log('[DB LocalAuth] Mật khẩu không đúng.');
+      console.log('[DB] Mật khẩu không đúng.');
       return null;
     }
   } catch (error) {
-    console.error(`[DB LocalAuth] Lỗi khi đăng nhập người dùng ${email} cục bộ:`, error);
+    console.error(`[DB] Lỗi khi đăng nhập người dùng ${email}:`, error);
     throw error;
   }
 };
 
-// --- Session Token Cục bộ (dùng EncryptedStorage) ---
-const LOCAL_SESSION_KEY = 'local_user_session_email';
-
-/**
- * Lưu session cục bộ (email của người dùng) vào EncryptedStorage.
- * Hàm này yêu cầu email phải là một chuỗi.
- */
+// --- Quản lý Session ---
 export const storeLocalSession = async (email: string): Promise<void> => {
-  // email ở đây được đảm bảo là string do kiểm tra ở nơi gọi
   try {
-    await EncryptedStorage.setItem(LOCAL_SESSION_KEY, email);
-    console.log('[LocalSession] Session cục bộ đã được lưu cho:', email);
+    await EncryptedStorage.setItem('local_user_session_email', email);
+    console.log('[DB] Đã lưu session cục bộ.');
   } catch (error) {
-    console.error('[LocalSession] Lỗi khi lưu session cục bộ:', error);
+    console.error('[DB] Lỗi khi lưu session cục bộ:', error);
   }
 };
 
 export const retrieveLocalSession = async (): Promise<string | null> => {
   try {
-    const email = await EncryptedStorage.getItem(LOCAL_SESSION_KEY);
+    const email = await EncryptedStorage.getItem('local_user_session_email');
     if (email) {
-      console.log('[LocalSession] Session cục bộ đã được truy xuất:', email);
+      console.log('[email] Đã lấy session cục bộ.');
       return email;
     }
     return null;
   } catch (error) {
-    console.error('[LocalSession] Lỗi khi truy xuất session cục bộ:', error);
+    console.error('[DB] Lỗi khi lấy session cục bộ:', error);
     return null;
   }
 };
 
 export const clearLocalSession = async (): Promise<void> => {
   try {
-    await EncryptedStorage.removeItem(LOCAL_SESSION_KEY);
+    await EncryptedStorage.removeItem('local_user_session_email');
     await clearLoggedInUserCache();
-    console.log('[LocalSession] Session cục bộ đã được xóa.');
+    console.log('[DB] Đã xóa session cục bộ.');
   } catch (error) {
-    console.error('[LocalSession] Lỗi khi xóa session cục bộ:', error);
+    console.error('[DB] Lỗi khi xóa session cục bộ:', error);
   }
 };
 
-// --- Quản lý Cache Hồ sơ Người dùng (SQLite) ---
+// --- Quản lý Cache Hồ sơ Người dùng ---
 export const saveLoggedInUserCache = async (user: UserProfile): Promise<void> => {
   if (!user || !user.id_from_backend) {
-    console.error('[DB Users] Dữ liệu người dùng không hợp lệ để lưu cache.');
+    console.error('[DB Users] Dữ liệu người dùng không hợp lệ.');
     return;
   }
   const db = await getDBInstance();
   try {
-    await db.transaction(async (tx: Transaction) => {
-      await tx.executeSql('DELETE FROM Users;');
-      await tx.executeSql(
-        'INSERT INTO Users (id_from_backend, name, email) VALUES (?, ?, ?);',
-        [user.id_from_backend, user.name, user.email],
-      );
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql('DELETE FROM Users;', [], () => {});
+        tx.executeSql(
+          'INSERT INTO Users (id_from_backend, name, email) VALUES (?, ?, ?);',
+          [user.id_from_backend, user.name, user.email],
+          () => resolve(),
+          (_, error) => {
+            console.error(`[DB] Lỗi lưu cache người dùng ${user.id_from_backend}:`, error);
+            reject(error);
+            return true;
+          }
+        );
+      });
     });
-    console.log(`[DB Users] Cache hồ sơ người dùng ${user.id_from_backend} đã được lưu/cập nhật.`);
+    console.log(`[DB] Đã lưu cache người dùng ${user.id_from_backend}.`);
   } catch (error) {
-    console.error(`[DB Users] Lỗi khi lưu cache hồ sơ người dùng ${user.id_from_backend}:`, error);
+    console.error(`[DB] Lỗi khi lưu cache người dùng ${user.id_from_backend}:`, error);
     throw error;
   }
 };
@@ -224,35 +409,24 @@ export const saveLoggedInUserCache = async (user: UserProfile): Promise<void> =>
 export const getLoggedInUserCache = async (): Promise<UserProfile | null> => {
   const db = await getDBInstance();
   try {
-    const user: UserProfile | null = await new Promise<UserProfile | null>((resolve, reject) => {
-      db.transaction(
-        async (tx: Transaction) => {
-          try {
-            const [, queryResult] = await tx.executeSql('SELECT * FROM Users LIMIT 1;');
-            if (queryResult && queryResult.rows.length > 0) {
-              resolve(queryResult.rows.item(0) as UserProfile);
-            } else {
-              resolve(null);
-            }
-          } catch (innerError) {
-            console.error('[DB Users] Lỗi SQL (getLoggedInUserCache):', innerError);
-            reject(innerError);
+    const user = await new Promise<UserProfile | null>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'SELECT * FROM Users LIMIT 1;',
+          [],
+          (_, results) => resolve(results.rows.length > 0 ? results.rows.item(0) : null),
+          error => {
+            console.error('[DB] Lỗi truy xuất:', error);
+            reject(error);
+            return true;
           }
-        },
-        (transactionError: SQLError) => {
-          console.error('[DB Users] Lỗi transaction (getLoggedInUserCache):', transactionError);
-          reject(transactionError);
-        }
-      );
+        );
+      });
     });
-    if (user) {
-      console.log(`[DB Users] Cache người dùng đăng nhập: ${user.id_from_backend}`);
-    } else {
-      console.log('[DB Users] Không có cache người dùng đăng nhập.');
-    }
+    console.log(user ? `[DB] Đã xuất cache người dùng: ${user.id_from_backend}` : '[DB] Không tìm thấy user cache.');
     return user;
   } catch (error) {
-    console.error('[DB Users] Lỗi khi lấy cache người dùng (Promise wrapper):', error);
+    console.error('[DB] Lỗi cache người dùng:', error);
     return null;
   }
 };
@@ -260,99 +434,163 @@ export const getLoggedInUserCache = async (): Promise<UserProfile | null> => {
 export const clearLoggedInUserCache = async (): Promise<void> => {
   const db = await getDBInstance();
   try {
-    await db.transaction(async (tx: Transaction) => {
-      await tx.executeSql('DELETE FROM Users;');
+    await new Promise<void>((resolve) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'DELETE FROM Users;',
+          [],
+          () => resolve(),
+        );
+      });
     });
-    console.log('[DB Users] Cache hồ sơ người dùng đăng nhập đã được xóa.');
+    console.log('[DB] Đã xóa cache người dùng.');
   } catch (error) {
-    console.error('[DB Users] Lỗi khi xóa cache hồ sơ người dùng đăng nhập:', error);
+    console.error('[DB] Lỗi khi xóa cache người dùng:', error);
     throw error;
   }
 };
 
-// --- Quản lý Cache Vé của Người dùng (SQLite) ---
+// --- Quản lý Cache Vé ---
 export const saveUserTicketsToCache = async (tickets: Ticket[]): Promise<void> => {
-  if (!tickets || tickets.length === 0) return;
+  if (!tickets || tickets.length === 0) {
+    console.warn('[DB Tickets] Không có vé để lưu.');
+    return;
+  }
   const db = await getDBInstance();
   try {
-    await db.transaction(async (tx: Transaction) => {
-      for (const ticket of tickets) {
-        if (!ticket.booking_id_from_backend || !ticket.user_id_from_backend) continue;
-        await tx.executeSql(
-          `INSERT OR REPLACE INTO UserTickets 
-            (booking_id_from_backend, user_id_from_backend, movie_title, poster_image_url, seat_array_json, show_time, show_date) 
-            VALUES (?, ?, ?, ?, ?, ?, ?);`,
-          [
-            ticket.booking_id_from_backend, ticket.user_id_from_backend,
-            ticket.movie_title, ticket.poster_image_url, ticket.seat_array_json,
-            ticket.show_time, ticket.show_date,
-          ],
-        );
-      }
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        for (const ticket of tickets) {
+          if (!ticket.booking_id_from_backend || !ticket.user_id_from_backend) {
+            console.warn('[DB Tickets] Bỏ qua vé thiếu dữ liệu:', ticket);
+            continue;
+          }
+          tx.executeSql(
+            `INSERT OR REPLACE INTO UserTickets 
+              (booking_id_from_backend, user_id_from_backend, movie_title, poster_image_url, seat_array_json, show_time, show_date) 
+              VALUES (?, ?, ?, ?, ?, ?, ?);`,
+            [
+              ticket.booking_id_from_backend,
+              ticket.user_id_from_backend,
+              ticket.movie_title,
+              ticket.poster_image_url,
+              ticket.seat_array_json,
+              ticket.show_time,
+              ticket.show_date,
+            ],
+            () => console.log(`[DB Tickets] Đã lưu vé ${ticket.booking_id_from_backend}`),
+            (_, error) => {
+              console.error('[DB] Lỗi lưu vé:', error);
+              reject(error);
+              return true;
+            }
+          );
+        }
+      }, error => reject(error), () => resolve());
     });
-    console.log(`[DB Tickets] ${tickets.length} vé đã lưu/cập nhật vào cache.`);
+    console.log(`[DB Tickets] Đã lưu ${tickets.length} vé vào cache.`);
   } catch (error) {
-    console.error('[DB Tickets] Lỗi khi lưu vé vào cache:', error);
+    console.error('[DB Tickets] Lỗi khi lưu vé:', error);
     throw error;
   }
 };
 
 export const getUserTicketsFromCache = async (userEmail: string): Promise<Ticket[]> => {
-  if (!userEmail) return [];
+  if (!userEmail) {
+    console.error('[DB Tickets] Cần email người dùng để truy xuất vé.');
+    return [];
+  }
   const db = await getDBInstance();
   try {
-    const tickets: Ticket[] = await new Promise<Ticket[]>((resolve, reject) => {
-      db.transaction(
-        async (tx: Transaction) => {
-          try {
+    const tickets = await new Promise<Ticket[]>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'SELECT * FROM UserTickets WHERE user_id_from_backend = ? ORDER BY show_date DESC, show_time DESC;',
+          [userEmail],
+          (_, results) => {
             const tempTickets: Ticket[] = [];
-            const [, queryResult] = await tx.executeSql(
-              'SELECT * FROM UserTickets WHERE user_id_from_backend = ? ORDER BY show_date DESC, show_time DESC;',
-              [userEmail]
-            );
-            if (queryResult && queryResult.rows.length > 0) {
-              for (let i = 0; i < queryResult.rows.length; i++) {
-                tempTickets.push(queryResult.rows.item(i) as Ticket);
-              }
+            for (let i = 0; i < results.rows.length; i++) {
+              tempTickets.push(results.rows.item(i));
             }
             resolve(tempTickets);
-          } catch (innerError) {
-            reject(innerError);
+          },
+          error => {
+            console.error('[DB] Lỗi truy xuất vé:', error);
+            reject(error);
+            return true;
           }
-        },
-        (transactionError: SQLError) => reject(transactionError)
-      );
+        );
+      });
     });
-    console.log(`[DB Tickets] Truy xuất ${tickets.length} vé từ cache cho ${userEmail}.`);
+    console.log(`[DB Tickets] Đã xuất ${tickets.length} vé cho người dùng ${userEmail}.`);
     return tickets;
   } catch (error) {
-    console.error(`[DB Tickets] Lỗi khi lấy vé từ cache cho ${userEmail}:`, error);
+    console.error(`[DB Tickets] Lỗi khi xuất vé cho người dùng ${userEmail}:`, error);
     return [];
   }
 };
 
 export const clearUserTicketsCacheForUser = async (userEmail: string): Promise<void> => {
-  if (!userEmail) return;
+  if (!userEmail) {
+    console.error('[DB Tickets] Cần email để xóa vé.');
+    return;
+  }
   const db = await getDBInstance();
   try {
-    await db.transaction(async (tx: Transaction) => {
-      await tx.executeSql('DELETE FROM UserTickets WHERE user_id_from_backend = ?;', [userEmail]);
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'DELETE FROM UserTickets WHERE user_id_from_backend = ?;',
+          [userEmail],
+          () => resolve(),
+          (_, error) => {
+            console.error(`[DB] Lỗi xóa vé của người dùng ${userEmail}:`, error);
+            reject(error);
+            return true;
+          }
+        );
+      });
     });
-    console.log(`[DB Tickets] Cache vé đã xóa cho ${userEmail}.`);
+    console.log(`[DB Tickets] Đã xóa vé của người dùng ${userEmail}.`);
   } catch (error) {
-    console.error(`[DB Tickets] Lỗi khi xóa cache vé cho ${userEmail}:`, error);
+    console.error(`[DB Tickets] Lỗi khi xóa vé của người dùng ${userEmail}:`, error);
     throw error;
   }
 };
 
-export const closeDB = async () => {
+// --- Đóng Cơ sở dữ liệu ---
+export const closeDB = async (): Promise<void> => {
   if (dbInstance) {
     try {
+      console.log('[DB] Đang đóng database...');
       await dbInstance.close();
       dbInstance = null;
-      console.log('[DB] Database ĐÃ ĐÓNG.');
+      console.log('[DB] Đã đóng database.');
     } catch (error) {
       console.error('[DB] Lỗi khi đóng database:', error);
     }
+  } else {
+    console.log('[DB] Không có instance database để đóng.');
+  }
+};
+
+// --- Reset Cơ sở dữ liệu ---
+export const resetDatabase = async (): Promise<void> => {
+  const db = await getDBInstance();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql('DROP TABLE IF EXISTS UserTickets;', [], () => {});
+        tx.executeSql('DROP TABLE IF EXISTS Users;', [], () => {});
+        tx.executeSql('DROP TABLE IF EXISTS LocalCredentials;', [], () => {});
+      }, error => reject(error), () => resolve());
+    });
+    dbInstance = null;
+    console.log('[DB] Đã xóa tất cả bảng.');
+    await initDB();
+    console.log('[DB] Đã reset và khởi tạo lại database.');
+  } catch (error) {
+    console.error('[DB] Lỗi khi reset database:', error);
+    throw error;
   }
 };

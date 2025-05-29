@@ -9,10 +9,10 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
-  StatusBar, // Import StatusBar
-  Platform,  // Import Platform
+  StatusBar, 
 } from 'react-native';
 import { COLORS, FONTFAMILY, FONTSIZE, SPACING, BORDERRADIUS } from '../theme/theme';
+import { registerLocalUser } from '../hooks/database'; 
 import AppHeader from '../components/AppHeader';
 
 interface RegisterScreenProps {
@@ -37,14 +37,17 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     }
     setIsLoading(true);
     try {
-      console.log('Đăng ký với:', name, email, password);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Gọi hàm đăng ký cục bộ từ database.ts
+      await registerLocalUser(name.trim(), email.trim().toLowerCase(), password);
+
       Alert.alert(
-        'Đăng ký thành công (giả lập)',
+        'Đăng ký thành công', // Bỏ chữ "giả lập"
         'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.',
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (error: any) {
+      // Lỗi có thể là do email đã tồn tại (nếu bạn đã implement kiểm tra đó trong registerLocalUser)
+      // Hoặc lỗi SQLite khác.
       Alert.alert('Đăng ký thất bại', error.message || 'Đã có lỗi xảy ra trong quá trình đăng ký.');
     } finally {
       setIsLoading(false);

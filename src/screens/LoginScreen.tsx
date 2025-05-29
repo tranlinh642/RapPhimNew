@@ -11,51 +11,51 @@ import {
   ScrollView,
 } from 'react-native';
 import { COLORS, FONTFAMILY, FONTSIZE, SPACING, BORDERRADIUS } from '../theme/theme';
-import { loginLocalUser, storeLocalSession, UserProfile } from '../hooks/database'; // Import UserProfile
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../App'; // Giả sử App.tsx ở thư mục gốc và export RootStackParamList
+import { useAuth } from '../context/AuthContext'; // Import useAuth để gọi hàm login
 
-interface LoginScreenProps {
-  navigation: any;
-  onLoginSuccess: (user: UserProfile) => void; // Hàm callback để App.tsx cập nhật state
-}
+// Định nghĩa kiểu props cho LoginScreen sử dụng NativeStackScreenProps
+type LoginScreenNavigationProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess }) => {
+// LoginScreenProps giờ đây nhận navigation và route từ kiểu trên
+interface LoginScreenProps extends LoginScreenNavigationProps {}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false); // Sẽ dùng isLoading từ useAuth
+
+  const { login, isLoading: authIsLoading } = useAuth(); // Lấy hàm login và trạng thái loading từ AuthContext
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập email và mật khẩu.');
       return;
     }
-    setIsLoading(true);
+    // Không cần setIsLoading(true) ở đây nữa vì useAuth().login() sẽ quản lý
     try {
-      const userProfile = await loginLocalUser(email.trim(), password);
-
-      if (userProfile) {
-        // Kiểm tra userProfile.email có giá trị không trước khi lưu session
-        if (userProfile.email) {
-          await storeLocalSession(userProfile.email); // Lưu email làm "session"
-          Alert.alert('Đăng nhập thành công', `Chào mừng ${userProfile.name || userProfile.email}!`);
-          onLoginSuccess(userProfile); // Gọi callback để App.tsx cập nhật trạng thái
-        } else {
-          // Trường hợp này không nên xảy ra nếu loginLocalUser trả về UserProfile hợp lệ với email
-          Alert.alert('Đăng nhập thất bại', 'Thông tin người dùng không hợp lệ (thiếu email).');
-        }
+      const success = await login(email.trim(), password); // Gọi hàm login từ context
+      if (success) {
+        // Đăng nhập thành công, AuthContext sẽ cập nhật trạng thái isLoggedIn,
+        // và AppNavigator sẽ tự động chuyển màn hình.
+        // Không cần điều hướng thủ công hay gọi onLoginSuccess ở đây.
+        console.log('Đăng nhập thành công thông qua AuthContext!');
+        // Alert.alert('Thông báo', 'Đăng nhập thành công!'); // Có thể bỏ Alert này nếu chuyển màn hình ngay
       } else {
+        // Hàm login trong AuthContext đã return false (ví dụ: thông tin không đúng nhưng không phải lỗi kỹ thuật)
         Alert.alert('Đăng nhập thất bại', 'Email hoặc mật khẩu không đúng.');
       }
     } catch (error: any) {
-      console.error('Lỗi trong quá trình đăng nhập:', error);
+      // Hàm login trong AuthContext đã throw error (ví dụ: lỗi mạng, lỗi server)
       Alert.alert('Đăng nhập thất bại', error.message || 'Đã có lỗi không mong muốn xảy ra.');
-    } finally {
-      setIsLoading(false);
     }
+    // Không cần setIsLoading(false) ở đây nữa
   };
 
   const handleForgotPassword = () => {
     console.log('Quên mật khẩu pressed');
-    Alert.alert('Thông báo', 'Chức năng Quên mật khẩu chưa được cài đặt.');
+    Alert.alert('Thông báo', 'Chức năng Quên mật khẩu hiện không được hỗ trợ trong phiên bản này.');
   };
 
   return (
@@ -86,7 +86,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess })
           <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
 
-        {isLoading ? (
+        {authIsLoading ? ( // Sử dụng authIsLoading từ useAuth()
           <ActivityIndicator size="large" color={COLORS.NetflixRed} style={styles.loader} />
         ) : (
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -96,7 +96,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess })
 
         <TouchableOpacity
           style={styles.registerLinkContainer}
-          onPress={() => navigation.navigate('Register')}>
+          onPress={() => navigation.navigate('Register')} // Điều hướng đến màn hình Register
+        >
           <Text style={styles.registerText}>Chưa có tài khoản? </Text>
           <Text style={[styles.registerText, styles.registerLink]}>Đăng ký</Text>
         </TouchableOpacity>
@@ -105,7 +106,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess })
   );
 };
 
-// Styles (giữ nguyên như trước, đảm bảo có BORDERRADIUS từ theme)
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -177,10 +177,10 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.poppins_semibold,
   },
   loader: {
-    height: 58,
+    height: 58, // Giữ chiều cao tương đương nút LoginButton
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.space_36,
+    marginBottom: SPACING.space_36, // Giữ margin tương đương LoginButton
   }
 });
 

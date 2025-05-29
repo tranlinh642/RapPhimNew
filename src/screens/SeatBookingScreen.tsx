@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+// src/screens/SeatBookingScreen.tsx
+import React, { useState } from 'react';
 import {
   Text,
   View,
@@ -9,8 +10,11 @@ import {
   TouchableOpacity,
   FlatList,
   ToastAndroid,
-  // Image, // Image component không được sử dụng trực tiếp, có thể bỏ nếu CustomIcon không dùng
+  Alert,
+  Platform,
 } from 'react-native';
+import { CommonActions, RouteProp, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   BORDERRADIUS,
   COLORS,
@@ -21,16 +25,12 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import AppHeader from '../components/AppHeader';
 import CustomIcon from '../components/CustomIcon';
-import EncryptedStorage from 'react-native-encrypted-storage';
+import { useAuth } from '../context/AuthContext';
+import { saveUserTicketsToCache, Ticket as TicketData } from '../hooks/database';
+import { RootStackParamList } from '../../App';
+import { getDBInstance } from '../hooks/database';
 
-const timeArray: string[] = [
-  '10:30',
-  '12:30',
-  '14:30',
-  '15:00',
-  '19:30',
-  '21:00',
-];
+const timeArray: string[] = ['10:30', '12:30', '14:30', '15:00', '19:30', '21:00'];
 
 const generateDate = () => {
   const date = new Date();
@@ -54,27 +54,20 @@ const generateSeats = () => {
     ['s', 's', 'e', 's', 's', 'e', 's', 's'],
     ['e', 'e', 'e', 's', 's', 'e', 'e', 'e'],
   ];
-
   let seatNumber = 1;
   const rowArray = [];
-
   for (let i = 0; i < seatLayout.length; i++) {
     const columnArray = [];
     for (let j = 0; j < seatLayout[i].length; j++) {
       if (seatLayout[i][j] === 's') {
-        const seatObject = {
+        columnArray.push({
           number: seatNumber++,
           taken: Math.random() < 0.3,
           selected: false,
           type: 'seat',
-        };
-        columnArray.push(seatObject);
+        });
       } else {
-        const seatObject = {
-          number: 'empty' + i + '-' + j,
-          type: 'empty',
-        };
-        columnArray.push(seatObject);
+        columnArray.push({ number: 'empty' + i + '-' + j, type: 'empty' });
       }
     }
     rowArray.push(columnArray);
@@ -82,19 +75,28 @@ const generateSeats = () => {
   return rowArray;
 };
 
-const SeatBookingScreen = ({navigation, route}: any) => {
+type SeatBookingScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SeatBooking'>;
+type SeatBookingScreenRouteProp = RouteProp<RootStackParamList, 'SeatBooking'>;
+
+interface SeatBookingScreenProps {
+  navigation: SeatBookingScreenNavigationProp;
+  route: SeatBookingScreenRouteProp;
+}
+
+const SeatBookingScreen: React.FC<SeatBookingScreenProps> = ({ navigation, route }) => {
+  const { user } = useAuth();
   const [dateArray, setDateArray] = useState<any[]>(generateDate());
-  const [selectedDateIndex, setSelectedDateIndex] = useState<any>();
+  const [selectedDateIndex, setSelectedDateIndex] = useState<number | undefined>();
   const [price, setPrice] = useState<number>(0);
   const [twoDSeatArray, setTwoDSeatArray] = useState<any[][]>(generateSeats());
   const [selectedSeatArray, setSelectedSeatArray] = useState<number[]>([]);
-  const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
+  const [selectedTimeIndex, setSelectedTimeIndex] = useState<number | undefined>();
+  const movieTitleFromParams = route.params?.movieTitle || "Tên Phim Mặc Định";
 
   const selectSeat = (rowIndex: number, seatIndex: number, seatNumber: number) => {
     if (!twoDSeatArray[rowIndex][seatIndex].taken) {
-      let currentSelectedSeats: number[] = [...selectedSeatArray];
+      let currentSelectedSeats = [...selectedSeatArray];
       let tempSeatArray = JSON.parse(JSON.stringify(twoDSeatArray));
-
       tempSeatArray[rowIndex][seatIndex].selected = !tempSeatArray[rowIndex][seatIndex].selected;
 
       if (!currentSelectedSeats.includes(seatNumber)) {
@@ -105,60 +107,114 @@ const SeatBookingScreen = ({navigation, route}: any) => {
           currentSelectedSeats.splice(indexInSelected, 1);
         }
       }
+      currentSelectedSeats.sort((a, b) => a - b);
       setSelectedSeatArray(currentSelectedSeats);
       setPrice(currentSelectedSeats.length * 75000);
       setTwoDSeatArray(tempSeatArray);
     }
   };
 
-  const BookSeats = async () => {
+  const processBooking = async () => {
+    if (!user || !user.email) {
+      Alert.alert("Yêu cầu đăng nhập", "Bạn cần đăng nhập để thực hiện chức năng đặt vé.");
+      return;
+    }
+
     if (
-      selectedSeatArray.length !== 0 &&
-      selectedTimeIndex !== undefined &&
-      selectedDateIndex !== undefined
+      selectedSeatArray.length === 0 ||
+      selectedTimeIndex === undefined ||
+      selectedDateIndex === undefined
     ) {
-      try {
-        await EncryptedStorage.setItem(
-          'ticket',
-          JSON.stringify({
-            seatArray: selectedSeatArray,
-            time: timeArray[selectedTimeIndex],
-            date: dateArray[selectedDateIndex],
-            ticketImage: route.params.PosterImage,
-          }),
-        );
-        navigation.navigate('Ticket', {
-          seatArray: selectedSeatArray,
-          time: timeArray[selectedTimeIndex],
-          date: dateArray[selectedDateIndex],
-          ticketImage: route.params.PosterImage,
-        });
-      } catch (error) {
-        console.error('Lỗi khi lưu vé:', error);
-        ToastAndroid.show('Đã có lỗi xảy ra khi lưu vé.', ToastAndroid.SHORT);
-      }
-    } else {
       ToastAndroid.showWithGravity(
         'Vui lòng chọn Ghế, Ngày và Giờ xem phim',
         ToastAndroid.SHORT,
         ToastAndroid.BOTTOM,
       );
+      return;
+    }
+
+    // Kiểm tra email người dùng trong LocalCredentials
+    const db = await getDBInstance();
+    const userExists = await new Promise<boolean>((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'SELECT email FROM LocalCredentials WHERE email = ?',
+          [user.email],
+          (_, results) => resolve(results.rows.length > 0),
+          (_, error) => {
+            console.error('[SeatBookingScreen] Lỗi khi kiểm tra người dùng trong LocalCredentials:', error);
+            reject(error);
+            return true;
+          }
+        );
+      });
+    });
+
+    if (!userExists) {
+      Alert.alert("Lỗi", "Tài khoản của bạn không tồn tại trong hệ thống. Vui lòng đăng ký lại.");
+      return;
+    }
+
+    const newTicketDataForDisplay = {
+      movieTitle: movieTitleFromParams,
+      posterImage: route.params.PosterImage,
+      seatArray: selectedSeatArray,
+      showTime: timeArray[selectedTimeIndex],
+      showDate: dateArray[selectedDateIndex],
+    };
+
+    const localBookingId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    const ticketToCache: TicketData = {
+      booking_id_from_backend: localBookingId,
+      user_id_from_backend: user.email,
+      movie_title: newTicketDataForDisplay.movieTitle,
+      poster_image_url: newTicketDataForDisplay.posterImage,
+      seat_array_json: JSON.stringify(selectedSeatArray),
+      show_time: newTicketDataForDisplay.showTime,
+      show_date: `${newTicketDataForDisplay.showDate.day}, ${newTicketDataForDisplay.showDate.date}`,
+    };
+
+    try {
+      await saveUserTicketsToCache([ticketToCache]);
+      console.log("[SeatBookingScreen] Vé đã được lưu vào cache SQLite:", ticketToCache);
+      ToastAndroid.show('Đặt vé thành công!', ToastAndroid.SHORT);
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: 'Tab',
+              params: {
+                screen: 'Ticket',
+                params: { refreshTimestamp: Date.now() },
+              },
+            },
+            {
+              name: 'TicketDetail',
+              params: newTicketDataForDisplay,
+            },
+          ],
+        })
+      );
+    } catch (error) {
+      console.error('[SeatBookingScreen] Lỗi khi lưu vé hoặc điều hướng:', error);
+      ToastAndroid.show('Lỗi khi lưu vé. Vui lòng thử lại.', ToastAndroid.LONG);
     }
   };
 
   return (
-    // BAO BỌC TẤT CẢ TRONG MỘT VIEW CHA CÓ flex: 1
     <View style={styles.rootContainer}>
-      <StatusBar hidden />
+      <StatusBar hidden={false} barStyle="light-content" backgroundColor={COLORS.Black} />
       <ScrollView
-        style={styles.scrollView} // Style riêng cho ScrollView
-        contentContainerStyle={styles.scrollViewContent} // Thêm paddingBottom ở đây
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         bounces={false}
         showsVerticalScrollIndicator={false}>
-        {/* Phần Header với ImageBackground */}
         <View style={styles.imageBackgroundContainer}>
           <ImageBackground
-            source={{uri: route.params?.bgImage}}
+            source={{ uri: route.params?.bgImage }}
             style={styles.ImageBG}>
             <LinearGradient
               colors={[COLORS.BlackRGB10 || 'rgba(0,0,0,0.1)', COLORS.Black]}
@@ -177,53 +233,50 @@ const SeatBookingScreen = ({navigation, route}: any) => {
             </LinearGradient>
           </ImageBackground>
           <Text style={styles.screenText}>Màn hình ở phía này</Text>
+          {movieTitleFromParams && <Text style={styles.movieTitleText}>{movieTitleFromParams}</Text>}
         </View>
 
-        {/* Phần chọn ghế */}
         <View style={styles.seatSectionContainer}>
           <View style={styles.seatLayoutContainer}>
             {twoDSeatArray?.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.seatRow}>
                 {row?.map((seat, seatIndex) =>
                   seat.type === 'empty' ? (
-                    <View key={seat.number} style={styles.emptySeatIcon} />
+                    <View key={seat.number.toString()} style={styles.emptySeatIcon} />
                   ) : (
                     <TouchableOpacity
-                      key={seat.number}
-                      onPress={() =>
-                        selectSeat(rowIndex, seatIndex, seat.number)
-                      }>
+                      key={seat.number.toString()}
+                      onPress={() => selectSeat(rowIndex, seatIndex, seat.number)}>
                       <CustomIcon
                         name="seat"
                         style={[
                           styles.seatIcon,
-                          seat.taken ? {color: COLORS.Grey} : {},
-                          seat.selected ? {color: COLORS.NetflixRed} : {},
+                          seat.taken ? { color: COLORS.Grey } : {},
+                          seat.selected ? { color: COLORS.NetflixRed } : {},
                         ]}
                       />
                     </TouchableOpacity>
-                  ),
+                  )
                 )}
               </View>
             ))}
           </View>
           <View style={styles.seatRadioContainer}>
             <View style={styles.radioContainer}>
-              <CustomIcon name="radio" style={[styles.radioIcon, {color: COLORS.White}]} />
+              <CustomIcon name="radio" style={[styles.radioIcon, { color: COLORS.White }]} />
               <Text style={styles.radioText}>Còn trống</Text>
             </View>
             <View style={styles.radioContainer}>
-              <CustomIcon name="radio" style={[styles.radioIcon, {color: COLORS.Grey}]} />
+              <CustomIcon name="radio" style={[styles.radioIcon, { color: COLORS.Grey }]} />
               <Text style={styles.radioText}>Đã bán</Text>
             </View>
             <View style={styles.radioContainer}>
-              <CustomIcon name="radio" style={[styles.radioIcon, {color: COLORS.NetflixRed}]} />
+              <CustomIcon name="radio" style={[styles.radioIcon, { color: COLORS.NetflixRed }]} />
               <Text style={styles.radioText}>Đang chọn</Text>
             </View>
           </View>
         </View>
 
-        {/* Phần chọn ngày */}
         <View style={styles.dateSelectionContainer}>
           <FlatList
             data={dateArray}
@@ -232,14 +285,14 @@ const SeatBookingScreen = ({navigation, route}: any) => {
             bounces={false}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.flatListContainer}
-            renderItem={({item, index}) => (
+            renderItem={({ item, index }) => (
               <TouchableOpacity onPress={() => setSelectedDateIndex(index)}>
                 <View
                   style={[
                     styles.dateContainer,
-                    index === 0 ? {marginLeft: SPACING.space_24} : {},
-                    index === dateArray.length - 1 ? {marginRight: SPACING.space_24} : {},
-                    index === selectedDateIndex ? {backgroundColor: COLORS.NetflixRed} : {},
+                    index === 0 ? { marginLeft: SPACING.space_24 } : {},
+                    index === dateArray.length - 1 ? { marginRight: SPACING.space_24 } : {},
+                    index === selectedDateIndex ? { backgroundColor: COLORS.NetflixRed } : {},
                   ]}>
                   <Text style={styles.dateText}>{item.date}</Text>
                   <Text style={styles.dayText}>{item.day}</Text>
@@ -249,7 +302,6 @@ const SeatBookingScreen = ({navigation, route}: any) => {
           />
         </View>
 
-        {/* Phần chọn giờ */}
         <View style={styles.timeSelectionContainer}>
           <FlatList
             data={timeArray}
@@ -258,14 +310,14 @@ const SeatBookingScreen = ({navigation, route}: any) => {
             bounces={false}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.flatListContainer}
-            renderItem={({item, index}) => (
+            renderItem={({ item, index }) => (
               <TouchableOpacity onPress={() => setSelectedTimeIndex(index)}>
                 <View
                   style={[
                     styles.timeContainer,
-                    index === 0 ? {marginLeft: SPACING.space_24} : {},
-                    index === timeArray.length - 1 ? {marginRight: SPACING.space_24} : {},
-                    index === selectedTimeIndex ? {backgroundColor: COLORS.NetflixRed} : {},
+                    index === 0 ? { marginLeft: SPACING.space_24 } : {},
+                    index === timeArray.length - 1 ? { marginRight: SPACING.space_24 } : {},
+                    index === selectedTimeIndex ? { backgroundColor: COLORS.NetflixRed } : {},
                   ]}>
                   <Text style={styles.timeText}>{item}</Text>
                 </View>
@@ -273,63 +325,63 @@ const SeatBookingScreen = ({navigation, route}: any) => {
             )}
           />
         </View>
-      </ScrollView> {/* Kết thúc ScrollView ở đây */}
+      </ScrollView>
 
-      {/* Phần giá và nút đặt vé - NẰM NGOÀI SCROLLVIEW */}
       <View style={styles.buttonPriceContainer}>
         <View style={styles.priceContainer}>
           <Text style={styles.totalPriceText}>Tổng cộng</Text>
           <Text style={styles.price}>{price.toLocaleString('vi-VN')} VND</Text>
         </View>
-        <TouchableOpacity onPress={BookSeats} style={styles.bookButton}>
-          <Text style={styles.buttonText}>Đặt Mua Vé</Text>
+        <TouchableOpacity onPress={processBooking} style={styles.bookButton}>
+          <Text style={styles.buttonText}>Xác Nhận Đặt Vé</Text>
         </TouchableOpacity>
       </View>
-    </View> // Kết thúc View cha (rootContainer)
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  rootContainer: { // Style cho View cha mới
+  rootContainer: {
     flex: 1,
     backgroundColor: COLORS.Black,
   },
-  scrollView: { // Style cho ScrollView
-    flex: 1, // Để ScrollView chiếm không gian còn lại phía trên nút đặt vé
+  scrollView: {
+    flex: 1,
   },
-  scrollViewContent: { // Thêm paddingBottom cho nội dung cuộn
-    paddingBottom: SPACING.space_20 * 5, // Điều chỉnh giá trị này cho phù hợp với chiều cao của buttonPriceContainer
-                                        // (Ví dụ: chiều cao buttonPriceContainer khoảng 80-100)
+  scrollViewContent: {
+    paddingBottom: SPACING.space_20 * 6,
   },
-  // container đã được đổi tên thành rootContainer
-  // container: {
-  // display: 'flex',
-  // flex: 1,
-  // backgroundColor: COLORS.Black,
-  // },
   imageBackgroundContainer: {},
   ImageBG: {
     width: '100%',
-    aspectRatio: 3072 / 1727,
+    aspectRatio: 16 / 9,
   },
   linearGradient: {
     height: '100%',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
   },
   appHeaderContainer: {
-    paddingHorizontal: SPACING.space_20,
-    paddingTop: (StatusBar.currentHeight || 0) + SPACING.space_10,
+    paddingHorizontal: SPACING.space_12,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : SPACING.space_10,
   },
   screenText: {
     textAlign: 'center',
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_10,
-    color: COLORS.WhiteRGBA75 || 'rgba(255,255,255,0.75)',
-    paddingVertical: SPACING.space_10,
+    color: COLORS.WhiteRGBA75,
+    paddingVertical: SPACING.space_4,
+    backgroundColor: COLORS.Black,
+  },
+  movieTitleText: {
+    textAlign: 'center',
+    fontFamily: FONTFAMILY.poppins_semibold,
+    fontSize: FONTSIZE.size_18,
+    color: COLORS.White,
+    paddingVertical: SPACING.space_8,
     backgroundColor: COLORS.Black,
   },
   seatSectionContainer: {
-    marginVertical: SPACING.space_36,
+    marginVertical: SPACING.space_20,
   },
   seatLayoutContainer: {
     gap: SPACING.space_10,
@@ -362,7 +414,6 @@ const styles = StyleSheet.create({
   },
   radioIcon: {
     fontSize: FONTSIZE.size_18,
-    color: COLORS.White,
   },
   radioText: {
     fontFamily: FONTFAMILY.poppins_medium,
@@ -370,84 +421,87 @@ const styles = StyleSheet.create({
     color: COLORS.White,
   },
   dateSelectionContainer: {
-    marginVertical: SPACING.space_36,
+    marginVertical: SPACING.space_20,
   },
   timeSelectionContainer: {
-    marginVertical: SPACING.space_36,
+    marginBottom: SPACING.space_20,
   },
   flatListContainer: {
     gap: SPACING.space_12,
     paddingHorizontal: SPACING.space_12,
   },
   dateContainer: {
-    width: SPACING.space_10 * 6,
-    height: SPACING.space_10 * 8,
-    borderRadius: BORDERRADIUS.radius_15,
+    width: SPACING.space_10 * 7,
+    height: SPACING.space_10 * 9,
+    borderRadius: BORDERRADIUS.radius_10,
     backgroundColor: COLORS.DarkGrey,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  dateText: {
-    fontFamily: FONTFAMILY.poppins_medium,
-    fontSize: FONTSIZE.size_20,
-    color: COLORS.White,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   dayText: {
     fontFamily: FONTFAMILY.poppins_regular,
-    fontSize: FONTSIZE.size_10,
+    fontSize: FONTSIZE.size_12,
+    color: COLORS.WhiteRGBA75,
+  },
+  dateText: {
+    fontFamily: FONTFAMILY.poppins_semibold,
+    fontSize: FONTSIZE.size_24,
     color: COLORS.White,
   },
   timeContainer: {
-    paddingVertical: SPACING.space_8,
+    paddingVertical: SPACING.space_10,
     borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA50 || 'rgba(255,255,255,0.5)',
-    paddingHorizontal: SPACING.space_15,
-    borderRadius: BORDERRADIUS.radius_20,
+    borderColor: COLORS.WhiteRGBA50,
+    paddingHorizontal: SPACING.space_18,
+    borderRadius: BORDERRADIUS.radius_25,
     backgroundColor: COLORS.DarkGrey,
     alignItems: 'center',
     justifyContent: 'center',
   },
   timeText: {
-    fontFamily: FONTFAMILY.poppins_regular,
-    fontSize: FONTSIZE.size_12,
+    fontFamily: FONTFAMILY.poppins_medium,
+    fontSize: FONTSIZE.size_14,
     color: COLORS.White,
   },
-  buttonPriceContainer: { // Style cho phần nút và giá ở cuối màn hình
+  buttonPriceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.space_20,
-    paddingVertical: SPACING.space_15,
-    // borderTopWidth: 1, // Bỏ đường kẻ nếu không muốn
-    // borderTopColor: COLORS.Grey, // Bỏ đường kẻ nếu không muốn
-    backgroundColor: COLORS.Black, // Để nó có nền giống màn hình
-    position: 'absolute', // Định vị tuyệt đối
+    paddingVertical: SPACING.space_12,
+    paddingBottom: Platform.OS === 'ios' ? SPACING.space_28 : SPACING.space_12,
+    backgroundColor: COLORS.Black,
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    borderTopWidth: 1,
+    borderColor: COLORS.Grey,
   },
   priceContainer: {
     alignItems: 'flex-start',
   },
   totalPriceText: {
     fontFamily: FONTFAMILY.poppins_regular,
-    fontSize: FONTSIZE.size_12,
-    color: COLORS.Grey,
+    fontSize: FONTSIZE.size_14,
+    color: COLORS.WhiteRGBA75,
   },
   price: {
-    fontFamily: FONTFAMILY.poppins_semibold,
+    fontFamily: FONTFAMILY.poppins_bold,
     fontSize: FONTSIZE.size_20,
     color: COLORS.White,
   },
   bookButton: {
-    borderRadius: BORDERRADIUS.radius_20,
-    paddingHorizontal: SPACING.space_20,
-    paddingVertical: SPACING.space_10,
+    borderRadius: BORDERRADIUS.radius_25,
+    paddingHorizontal: SPACING.space_28,
+    paddingVertical: SPACING.space_14,
     backgroundColor: COLORS.NetflixRed,
   },
   buttonText: {
     fontFamily: FONTFAMILY.poppins_semibold,
-    fontSize: FONTSIZE.size_14,
+    fontSize: FONTSIZE.size_16,
     color: COLORS.White,
   },
 });

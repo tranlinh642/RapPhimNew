@@ -42,13 +42,18 @@ const getMovieDetailsAPI = async (movieid: number, language: string) => {
     });
     if (!response.ok) {
       // Handle HTTP errors
-      console.error(`HTTP error ${response.status} in getMovieDetailsAPI for lang ${language}`);
+      console.error(
+        `HTTP error ${response.status} in getMovieDetailsAPI for lang ${language}`,
+      );
       return null; // Or throw new Error(`HTTP error ${response.status}`);
     }
     const json = await response.json();
     return json;
   } catch (error) {
-    console.error(`Something went wrong in getMovieDetailsAPI for lang ${language}`, error);
+    console.error(
+      `Something went wrong in getMovieDetailsAPI for lang ${language}`,
+      error,
+    );
     return null; // Ensure function returns null on error
   }
 };
@@ -69,7 +74,10 @@ const getMovieCastDetailsAPI = async (movieid: number) => {
     const json = await response.json();
     return json;
   } catch (error) {
-    console.error('Something went wrong in getMovieCastDetailsAPI Function', error);
+    console.error(
+      'Something went wrong in getMovieCastDetailsAPI Function',
+      error,
+    );
     return null;
   }
 };
@@ -120,20 +128,35 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
       let tempMovieDataVI = await getMovieDetailsAPI(movieIdFromRoute, 'vi-VN');
 
       // 2. Check if Vietnamese overview is missing
-      if (tempMovieDataVI && (!tempMovieDataVI.overview || tempMovieDataVI.overview.trim() === '')) {
-        console.log(`Vietnamese overview for movie ID ${movieIdFromRoute} is missing. Fetching English overview.`);
+      if (
+        tempMovieDataVI &&
+        (!tempMovieDataVI.overview || tempMovieDataVI.overview.trim() === '')
+      ) {
+        console.log(
+          `Vietnamese overview for movie ID ${movieIdFromRoute} is missing. Fetching English overview.`,
+        );
         // 3. Fetch English movie details
-        const tempMovieDataEN = await getMovieDetailsAPI(movieIdFromRoute, 'en-US');
-        if (tempMovieDataEN && tempMovieDataEN.overview && tempMovieDataEN.overview.trim() !== '') {
+        const tempMovieDataEN = await getMovieDetailsAPI(
+          movieIdFromRoute,
+          'en-US',
+        );
+        if (
+          tempMovieDataEN &&
+          tempMovieDataEN.overview &&
+          tempMovieDataEN.overview.trim() !== ''
+        ) {
           // 4. Use English overview if available, keep other VI details
-          tempMovieDataVI = { ...tempMovieDataVI, overview: tempMovieDataEN.overview };
+          tempMovieDataVI = {
+            ...tempMovieDataVI,
+            overview: tempMovieDataEN.overview,
+          };
         }
       }
-      
+
       // If tempMovieDataVI is still null after attempts (e.g., movie ID invalid), stop loading
       if (!tempMovieDataVI) {
-          setMovieData(null); // Indicate that data loading failed or movie doesn't exist
-          return;
+        setMovieData(null); // Indicate that data loading failed or movie doesn't exist
+        return;
       }
 
       setMovieData(tempMovieDataVI);
@@ -142,13 +165,14 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
       const videosData = await getMovieVideosAPI(movieIdFromRoute);
       if (videosData && videosData.results) {
         const officialTrailer = videosData.results.find(
-          (video: any) => video.site === 'YouTube' && video.type === 'Trailer'
+          (video: any) => video.site === 'YouTube' && video.type === 'Trailer',
         );
         if (officialTrailer) {
           setTrailerKey(officialTrailer.key);
         } else {
           const anyYoutubeVideo = videosData.results.find(
-            (video: any) => video.site === 'YouTube' && video.type !== 'Behind the Scenes' // Ưu tiên không phải BTS
+            (video: any) =>
+              video.site === 'YouTube' && video.type !== 'Behind the Scenes', // Ưu tiên không phải BTS
           );
           setTrailerKey(anyYoutubeVideo ? anyYoutubeVideo.key : null);
         }
@@ -191,21 +215,20 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
 
   // Case where movieData is null (e.g. invalid movie ID or API error)
   if (movieData === null) {
-      return (
-          <View style={styles.container}>
-              <View style={styles.appHeaderContainerLoading}>
-                  <AppHeader
-                  name="arrow-back-outline"
-                  action={() => navigation.goBack()}
-                  />
-              </View>
-              <View style={styles.loadingContainer}>
-                <Text style={styles.errorText}>Không thể tải thông tin phim.</Text>
-              </View>
-          </View>
-      );
+    return (
+      <View style={styles.container}>
+        <View style={styles.appHeaderContainerLoading}>
+          <AppHeader
+            name="arrow-back-outline"
+            action={() => navigation.goBack()}
+          />
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Không thể tải thông tin phim.</Text>
+        </View>
+      </View>
+    );
   }
-
 
   return (
     <ScrollView
@@ -229,7 +252,10 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
                 action={() => navigation.goBack()}
                 showClock={true}
                 runtime={movieData?.runtime}
-                customIconStyle={{backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: BORDERRADIUS.radius_20}}
+                customIconStyle={{
+                  backgroundColor: 'rgba(0,0,0,0.3)',
+                  borderRadius: BORDERRADIUS.radius_20,
+                }}
               />
             </View>
           </LinearGradient>
@@ -257,28 +283,50 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
             />
             {/* Nút play chỉ hiện khi video chưa play và có trailerKey */}
             {!playing && (
-              <TouchableOpacity style={[styles.playButtonOverlayVideo, {height: videoHeight, width: videoWidth}]} onPress={() => setPlaying(true)}>
-                <Ionicons name="play-circle-outline" size={60} color={COLORS.WhiteRGBA75 || 'rgba(255,255,255,0.75)'} />
+              <TouchableOpacity
+                style={[
+                  styles.playButtonOverlayVideo,
+                  {height: videoHeight, width: videoWidth},
+                ]}
+                onPress={() => setPlaying(true)}>
+                <Ionicons
+                  name="play-circle-outline"
+                  size={60}
+                  color={COLORS.WhiteRGBA75 || 'rgba(255,255,255,0.75)'}
+                />
               </TouchableOpacity>
             )}
           </>
         ) : (
-          <View style={[styles.noTrailerContainer, {height: videoHeight, width: videoWidth}]}>
-            <Ionicons name="videocam-off-outline" size={40} color={COLORS.WhiteRGBA50 || 'rgba(255,255,255,0.5)'} />
+          <View
+            style={[
+              styles.noTrailerContainer,
+              {height: videoHeight, width: videoWidth},
+            ]}>
+            <Ionicons
+              name="videocam-off-outline"
+              size={40}
+              color={COLORS.WhiteRGBA50 || 'rgba(255,255,255,0.5)'}
+            />
             <Text style={styles.noTrailerText}>Không có trailer</Text>
           </View>
         )}
       </View>
 
       <View style={styles.mainInfoContainer}>
-        <Text style={styles.title}>{movieData?.title || movieData?.original_title}</Text>
+        <Text style={styles.title}>
+          {movieData?.title || movieData?.original_title}
+        </Text>
 
         <View style={styles.ratingsSection}>
           <View style={styles.starRatingContainer}>
             <Ionicons name="star" style={styles.starIcon} />
             <Text style={styles.ratingText}>
               {movieData?.vote_average?.toFixed(1)}
-              <Text style={styles.ratingCountText}> ({movieData?.vote_count} reviews)</Text>
+              <Text style={styles.ratingCountText}>
+                {' '}
+                ({movieData?.vote_count} reviews)
+              </Text>
             </Text>
           </View>
         </View>
@@ -291,11 +339,15 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
           ))}
         </View>
 
-        {movieData?.tagline?.trim() ? (<Text style={styles.tagline}>{movieData.tagline}</Text>) : null}
+        {movieData?.tagline?.trim() ? (
+          <Text style={styles.tagline}>{movieData.tagline}</Text>
+        ) : null}
       </View>
 
       <View style={styles.descriptionContainer}>
-        <Text style={styles.descriptionText}>{movieData?.overview || 'Không có mô tả.'}</Text>
+        <Text style={styles.descriptionText}>
+          {movieData?.overview || 'Không có mô tả.'}
+        </Text>
       </View>
 
       {movieCastData && movieCastData.length > 0 && (
@@ -322,20 +374,22 @@ const MovieDetailsScreen = ({navigation, route}: any) => {
         </View>
       )}
       {movieData && isNowPlayingMovie && (
-      <View style={styles.bookingButtonContainer}>
-        <TouchableOpacity
-          style={styles.bookingButton}
-          onPress={() => {
-            if (movieData) {
-              navigation.push('SeatBooking', {
-                bgImage: baseImagePath('w780', movieData.backdrop_path),
-                PosterImage: baseImagePath('original', movieData.poster_path),
-              });
-            }
-          }}>
-          <Text style={styles.bookingButtonText}>Đặt vé</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.bookingButtonContainer}>
+          <TouchableOpacity
+            style={styles.bookingButton}
+            onPress={() => {
+              if (movieData) {
+                navigation.push('SeatBooking', {
+                  bgImage: baseImagePath('w780', movieData.backdrop_path),
+                  PosterImage: baseImagePath('original', movieData.poster_path),
+                  movieTitle: movieData.title || movieData.original_title, // Thêm dòng này
+                  movieId: route.params.movieid,
+                });
+              }
+            }}>
+            <Text style={styles.bookingButtonText}>Đặt vé</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </ScrollView>
   );
