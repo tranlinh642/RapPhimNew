@@ -206,7 +206,6 @@ export const getDBInstance = async (): Promise<SQLiteDatabase> => {
   return dbInstance;
 };
 
-// --- Debug Cơ sở dữ liệu ---
 export const debugDatabaseTables = async (): Promise<string[]> => {
   const db = await getDBInstance();
   try {
@@ -324,7 +323,7 @@ export const loginLocalUser = async (email: string, password: string): Promise<U
         name: userCredential.name,
         email: userCredential.email,
       };
-      await saveLoggedInUserCache(userProfile); // Sửa lỗi: gọi đúng hàm
+      await saveLoggedInUserCache(userProfile); 
       return userProfile;
     } else {
       console.log('[DB] Mật khẩu không đúng.');
